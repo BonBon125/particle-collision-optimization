@@ -10,9 +10,12 @@
 #include <vector>
 
 const int NUM_CIRCLE_SEGMENTS = 100;
+const int NUM_BALLS = 100;
 std::default_random_engine gen;
 std::uniform_real_distribution<float> distribution(-1.0, 1.0);
 const float borderThickness = 0.01f;
+
+std::string BACKGROUND_COLOUR = "Black";
 
 struct Colour {
     float r, g, b;
@@ -94,7 +97,7 @@ void drawCircle(float cx, float cy, float r)
 
 void clearScreen()
 {
-    auto& c = COLOURS.at("Tan");
+    auto& c = COLOURS.at(BACKGROUND_COLOUR);
     glClearColor(c.r, c.g, c.b, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -132,7 +135,7 @@ private:
     }
 
 public:
-    BallCollection(int numBalls = 2)
+    BallCollection(int numBalls = NUM_BALLS)
     {
         Balls.resize(numBalls);
         for (int i = 0; i < numBalls; i++) {
@@ -199,18 +202,28 @@ public:
         return false;
     }
 
+    void particleCollisionCalculation(Ball* ball1, Ball* ball2)
+    {
+        // calculate and change the balls' velocity and position
+        // draw a line between their centers and calculate the
+    }
+
     void handleParticleCollisions(Ball* ball, int ballIndex)
     {
-        bool is_colliding = false;
-        for (int nextBallIndex = ballIndex + 1; nextBallIndex < Balls.size(); nextBallIndex++) {
-            Ball* nextBall = Balls[nextBallIndex];
-            if (!areTouching(ball, nextBall)) {
+        ball->is_colliding = false;
+        for (int nextBallIndex = 0; nextBallIndex < Balls.size(); nextBallIndex++) {
+            if (nextBallIndex == ballIndex) {
                 continue;
             }
-            is_colliding = true;
-            handleParticleCollisions(nextBall, nextBallIndex);
+            Ball* nextBall = Balls[nextBallIndex];
+            bool touching = areTouching(ball, nextBall);
+            if (touching) {
+                ball->is_colliding = true;
+            }
+            if (touching && nextBallIndex > ballIndex) {
+                particleCollisionCalculation(ball, nextBall);
+            }
         }
-        ball->is_colliding = is_colliding;
     }
 
     void moveBall(Ball* ball, float timeDelta)
