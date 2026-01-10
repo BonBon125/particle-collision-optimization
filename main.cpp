@@ -10,10 +10,11 @@
 #include <vector>
 
 const int NUM_CIRCLE_SEGMENTS = 100;
-const int NUM_BALLS = 6;
-const float MIN_BALL_RADIUS = 0.1;
-const float MAX_BALL_RADIUS = 0.2;
-std::default_random_engine gen;
+const int NUM_BALLS = 20;
+const float MIN_BALL_RADIUS = 0.05;
+const float MAX_BALL_RADIUS = 0.1;
+std::random_device rd;
+std::default_random_engine gen(rd());
 std::uniform_real_distribution<float> distribution(-1.0, 1.0);
 std::uniform_real_distribution<float> radius_dist(MIN_BALL_RADIUS, MAX_BALL_RADIUS);
 const float BORDER_THICKNESS = 0.01f;
