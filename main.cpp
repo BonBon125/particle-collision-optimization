@@ -10,9 +10,9 @@
 #include <vector>
 
 const int NUM_CIRCLE_SEGMENTS = 100;
-const int NUM_BALLS = 100;
-const float MIN_BALL_RADIUS = 0.01;
-const float MAX_BALL_RADIUS = 0.01;
+const int NUM_BALLS = 10;
+const float MIN_BALL_RADIUS = 0.01f;
+const float MAX_BALL_RADIUS = 0.01f;
 const float RESTITUTION = 0.9f;
 std::random_device rd;
 std::default_random_engine gen(rd());
@@ -20,7 +20,7 @@ std::uniform_real_distribution<float> distribution(-1.0, 1.0);
 std::uniform_real_distribution<float> radius_dist(MIN_BALL_RADIUS, MAX_BALL_RADIUS);
 const float BORDER_THICKNESS = 0.001f;
 const float BALL_RADIUS = 0.02f;
-const float BALL_ACCELERATION = -4.0f;
+const float BALL_ACCELERATION = -0.0f;
 
 std::string BACKGROUND_COLOUR = "Black";
 
@@ -316,6 +316,12 @@ public:
     }
 };
 
+void displayFPS(float dt)
+{
+    float fps = 1.0 / dt;
+    std::cout << "\r" << fps << std::flush;
+}
+
 int main()
 {
     if (!glfwInit())
@@ -349,6 +355,8 @@ int main()
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        displayFPS(deltaTime);
     }
 
     glfwTerminate();
