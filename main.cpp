@@ -10,15 +10,17 @@
 #include <vector>
 
 const int NUM_CIRCLE_SEGMENTS = 100;
-const int NUM_BALLS = 20;
-const float MIN_BALL_RADIUS = 0.05;
-const float MAX_BALL_RADIUS = 0.1;
+const int NUM_BALLS = 100;
+const float MIN_BALL_RADIUS = 0.01;
+const float MAX_BALL_RADIUS = 0.01;
+const float RESTITUTION = 0.9f;
 std::random_device rd;
 std::default_random_engine gen(rd());
 std::uniform_real_distribution<float> distribution(-1.0, 1.0);
 std::uniform_real_distribution<float> radius_dist(MIN_BALL_RADIUS, MAX_BALL_RADIUS);
-const float BORDER_THICKNESS = 0.01f;
+const float BORDER_THICKNESS = 0.001f;
 const float BALL_RADIUS = 0.02f;
+const float BALL_ACCELERATION = -4.0f;
 
 std::string BACKGROUND_COLOUR = "Black";
 
@@ -114,6 +116,7 @@ struct Ball {
     float vy = 0.0f;
     float radius = 0.0f;
     bool is_colliding = false;
+    float acceleration = BALL_ACCELERATION;
 };
 
 class BallCollection {
@@ -173,6 +176,14 @@ public:
             glColor3f(c.r, c.g, c.b);
             drawCircle(x, y, radius);
         }
+    }
+
+    void handleAcceleration(Ball* ball, float dt)
+    {
+        // for each ball, apply acceleration to update
+        // we have initial velocity, time and acceleration
+        // calculate final velocity
+        ball->vy = ball->vy + ball->acceleration * dt;
     }
 
     void handleWallCollisions(Ball* ball)
@@ -240,8 +251,9 @@ public:
         float v2t = ball2->vx * tx + ball2->vy * ty;
 
         // Equal mass elastic collision → swap normal components
-        float v1n_after = v2n;
-        float v2n_after = v1n;
+        // Equal mass inelastic collision using coefficient of restitution
+        float v1n_after = (v1n + v2n - RESTITUTION * (v1n - v2n)) * 0.5f;
+        float v2n_after = (v1n + v2n + RESTITUTION * (v1n - v2n)) * 0.5f;
 
         // Convert scalar normal/tangent velocities back to vectors
         ball1->vx = v1n_after * nx + v1t * tx;
@@ -295,10 +307,11 @@ public:
             // Update position
             Ball* ball = Balls[ballIndex];
 
-            moveBall(ball, timeDelta);
             // do the initial movement based on current velocity
             handleWallCollisions(ball);
             handleParticleCollisions(ball, ballIndex);
+            handleAcceleration(ball, timeDelta);
+            moveBall(ball, timeDelta);
         }
     }
 };
