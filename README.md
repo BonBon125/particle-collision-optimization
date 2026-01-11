@@ -6,7 +6,7 @@ A real-time 2D physics simulation written in **C++** using **OpenGL** and **GLFW
 
 ## Demo
 
-<!-- GIF_PLACEHOLDER: Add a GIF showing the simulation running -->
+![](gif-directory/demo.gif)
 
 ---
 
@@ -54,4 +54,50 @@ const int NUM_BALLS = 10;
 const float RESTITUTION = 0.9f;
 const float MIN_BALL_RADIUS = 0.01f;
 const float MAX_BALL_RADIUS = 0.01f;
+```
 
+You can also modify:
+
+- Background colour
+- Ball colours
+- Border thickness
+- Window size
+
+---
+
+# Build and Run
+
+## Dependencies:
+- C++17 or later
+- OpenGL
+- GLFW
+
+## Comple (Linux/macOS)
+```bash
+./run.sh
+```
+---
+## Rendering Details
+- Circles are rendered using triangle fans with configurable segment counts
+
+- Each ball is drawn with a thin border for visual clarity
+
+- Rendering is done in normalized device coordinates using:
+```cpp
+    glOrtho(-1, 1, -1, 1, -1, 1);
+```
+- Colours are selected from a predefined colour map for easy customization
+- Immediate-mode OpenGL is used for simplicity and clarity
+
+---
+
+# Future Improvements
+- Add gravity and configurable acceleration
+
+- Support variable ball masses
+
+- Introduce user interaction (mouse and keyboard controls)
+
+- Implement spatial partitioning for improved performance
+
+- Add UI controls for runtime parameter tuning
