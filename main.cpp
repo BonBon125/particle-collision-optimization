@@ -10,21 +10,30 @@
 #include <vector>
 
 const int NUM_CIRCLE_SEGMENTS = 100;
-const int NUM_BALLS = 100;
+const int NUM_BALLS = 10000;
+
 const float MIN_BALL_RADIUS = 0.01f;
 const float MAX_BALL_RADIUS = 0.01f;
 const float RESTITUTION = 0.4f;
-std::random_device rd;
-std::default_random_engine gen(rd());
-std::uniform_real_distribution<float> distribution(-1.0, 1.0);
-std::uniform_real_distribution<float> radius_dist(MIN_BALL_RADIUS, MAX_BALL_RADIUS);
 const float BORDER_THICKNESS = 0.001f;
 const float BALL_RADIUS = 0.02f;
 const float BALL_ACCELERATION = -0.0f;
 const float WALL_COLLISION_ENERGY_LOSS = 1.00f;
 
-std::string BACKGROUND_COLOUR = "Black";
+const float WORLD_MIN = -1.0f;
+const float WORLD_MAX = 1.0f;
 
+const float CELL_SIZE = MAX_BALL_RADIUS * 2.5f;
+const int GRID_WIDTH = int((WORLD_MAX - WORLD_MIN) / CELL_SIZE) + 1;
+const int GRID_HEIGHT = GRID_WIDTH;
+
+// Random number generation
+std::random_device rd;
+std::default_random_engine gen(rd());
+std::uniform_real_distribution<float> dist(-1.0, 1.0);
+std::uniform_real_distribution<float> radius_dist(MIN_BALL_RADIUS, MAX_BALL_RADIUS);
+
+// Colour customisation
 struct Colour {
     float r, g, b;
 };
@@ -85,6 +94,7 @@ const std::unordered_map<bool, std::string> BALL_COLOURS = {
     { true, "Yellow" },
     { false, "Yellow" }
 };
+std::string BACKGROUND_COLOUR = "Black";
 
 void drawCircle(float cx, float cy, float r)
 {
@@ -94,7 +104,7 @@ void drawCircle(float cx, float cy, float r)
 
     for (int i = 0; i <= NUM_CIRCLE_SEGMENTS; i++) {
         float angle = 2.0f * 3.1415926f * i / NUM_CIRCLE_SEGMENTS;
-        // converting polar coordinates to cartesian
+        // Converting polar coordinates to cartesian
         float x = cx + cos(angle) * r;
         float y = cy + sin(angle) * r;
         glVertex2f(x, y);
@@ -111,41 +121,29 @@ void clearScreen()
 }
 
 struct Ball {
-    float x = 0.0f;
-    float y = 0.0f;
-    float vx = 0.0f;
-    float vy = 0.0f;
-    float radius = 0.0f;
+    float x, y;
+    float vx, vy;
+    float radius;
     bool is_colliding = false;
-    float acceleration = BALL_ACCELERATION;
 };
 
 class BallCollection {
 private:
     std::vector<Ball*> Balls;
+    std::vector<std::vector<int>> grid;
 
-    float get_random_float()
+    int cellX(float x) { return int((x - WORLD_MIN) / CELL_SIZE); }
+    int cellY(float y) { return int((y - WORLD_MIN) / CELL_SIZE); }
+    int cellIndex(int x, int y) { return y * GRID_WIDTH + x; }
+
+    Ball* createBall()
     {
-        // return a value between -1 and 1
-        return distribution(gen);
-    }
-    float get_random_radius()
-    {
-        return radius_dist(gen);
-    }
-    Ball* createNewBall()
-    {
-        float new_x = get_random_float();
-        float new_y = get_random_float();
-        float new_vx = get_random_float();
-        float new_vy = get_random_float();
-        float radius = get_random_radius();
         Ball* newBall = new Ball;
-        newBall->x = new_x;
-        newBall->y = new_y;
-        newBall->vx = new_vx;
-        newBall->vy = new_vy;
-        newBall->radius = radius;
+        newBall->x = dist(gen);
+        newBall->y = dist(gen);
+        newBall->vx = dist(gen);
+        newBall->vy = dist(gen);
+        newBall->radius = radius_dist(gen);
         return newBall;
     }
 
@@ -154,10 +152,40 @@ public:
     {
         Balls.resize(numBalls);
         for (int i = 0; i < numBalls; i++) {
-            Balls[i] = createNewBall();
+            Balls[i] = createBall();
+        }
+        grid.resize(GRID_WIDTH * GRID_HEIGHT);
+    }
+
+    void rebuildGrid()
+    {
+        // Remove all values in the grid
+        for (auto& cell : grid) {
+            cell.clear();
+        }
+
+        // Add each ball to the corresponding gridbox
+        for (int i = 0; i < Balls.size(); i++) {
+            Ball* b = Balls[i];
+
+            // Convert the x and y values to the grid x and y values
+            // Clamp ensures the values do not exceed the limits provided
+            int cx = std::clamp(cellX(b->x), 0, GRID_WIDTH - 1);
+            int cy = std::clamp(cellY(b->y), 0, GRID_HEIGHT - 1);
+            grid[cellIndex(cx, cy)].push_back(i);
         }
     }
-    void renderBalls()
+
+    bool touching(Ball* a, Ball* b)
+    {
+        // Returns wether the two balls are touching
+        float dx = a->x - b->x;
+        float dy = a->y - b->y;
+        float r = a->radius + b->radius;
+        return dx * dx + dy * dy <= r * r;
+    }
+
+    void render()
     {
 
         clearScreen();
@@ -179,65 +207,14 @@ public:
         }
     }
 
-    void handleAcceleration(Ball* ball, float dt)
-    {
-        // for each ball, apply acceleration to update
-        // we have initial velocity, time and acceleration
-        // calculate final velocity
-        ball->vy = ball->vy + ball->acceleration * dt;
-    }
-
-    void handleWallCollisions(Ball* ball)
-    {
-        if (ball->x + ball->radius > 1.0f) {
-            ball->x = 1.0f - ball->radius;
-            ball->vx = -ball->vx;
-            ball->vx *= WALL_COLLISION_ENERGY_LOSS;
-        }
-        if (ball->x - ball->radius < -1.0f) {
-            ball->x = -1.0f + ball->radius;
-            ball->vx = -ball->vx;
-            ball->vx *= WALL_COLLISION_ENERGY_LOSS;
-        }
-
-        if (ball->y + ball->radius > 1.0f) {
-            ball->y = 1.0f - ball->radius;
-            ball->vy = -(ball->vy);
-            ball->vy *= WALL_COLLISION_ENERGY_LOSS;
-        }
-        if (ball->y - ball->radius < -1.0f) {
-            ball->y = -1.0f + ball->radius;
-            ball->vy = -(ball->vy);
-            ball->vy *= WALL_COLLISION_ENERGY_LOSS;
-        }
-    }
-
-    bool areTouching(Ball* ball1, Ball* ball2)
-    {
-        // check the distance between their centers
-        float x1 = ball1->x;
-        float y1 = ball1->y;
-        float x2 = ball2->x;
-        float y2 = ball2->y;
-
-        float distance = pow(pow(x1 - x2, 2) + pow(y1 - y2, 2), 0.5);
-
-        if (distance <= ball1->radius + ball2->radius) {
-            return true;
-        }
-
-        return false;
-    }
-
-    void particleCollisionCalculation(Ball* ball1, Ball* ball2)
+    void resolveCollision(Ball* ball1, Ball* ball2)
     {
         // Vector between centers
         float dx = ball2->x - ball1->x;
         float dy = ball2->y - ball1->y;
-
         float distance = std::sqrt(dx * dx + dy * dy);
         if (distance == 0.0f) {
-            return; // avoid division by zero
+            return; // Avoid division by zero
         }
 
         // Normal vector
@@ -281,21 +258,76 @@ public:
         ball2->is_colliding = true;
     }
 
-    void handleParticleCollisions(Ball* ball, int ballIndex)
+    void handleParticleCollisions()
     {
-        ball->is_colliding = false;
-        for (int nextBallIndex = 0; nextBallIndex < Balls.size(); nextBallIndex++) {
-            if (nextBallIndex == ballIndex) {
-                continue;
+        // First assume no balls are colliding
+        for (auto* b : Balls) {
+            b->is_colliding = false;
+        }
+
+        for (int i = 0; i < Balls.size(); i++) {
+            // For every ball
+            Ball* b = Balls[i];
+
+            // Calculate the grid square the ball is in
+            int cx = cellX(b->x);
+            int cy = cellY(b->y);
+
+            // Iterate over all the grid squares that are adjacent to the one the ball is in
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    int nx = cx + dx;
+                    int ny = cy + dy;
+
+                    // If the grid square is outside of bounds, continue
+                    if (nx < 0 || ny < 0 || nx >= GRID_WIDTH || ny >= GRID_HEIGHT) {
+                        continue;
+                    }
+                    for (int j : grid[cellIndex(nx, ny)]) {
+                        // Only check collisions with balls further in the grid
+                        if (j <= i) {
+                            continue;
+                        }
+                        // If they are touching,
+                        if (touching(b, Balls[j])) {
+                            resolveCollision(b, Balls[j]);
+                        }
+                    }
+                }
             }
-            Ball* nextBall = Balls[nextBallIndex];
-            bool touching = areTouching(ball, nextBall);
-            if (touching) {
-                ball->is_colliding = true;
-            }
-            if (touching && nextBallIndex > ballIndex) {
-                particleCollisionCalculation(ball, nextBall);
-            }
+        }
+    }
+
+    void handleAcceleration(Ball* ball, float dt)
+    {
+        // For each ball, apply acceleration to update
+        // We have initial velocity, time and acceleration
+        // Calculate final velocity
+        ball->vy = ball->vy + BALL_ACCELERATION * dt;
+    }
+
+    void handleWallCollisions(Ball* ball)
+    {
+        if (ball->x + ball->radius > 1.0f) {
+            ball->x = 1.0f - ball->radius;
+            ball->vx = -ball->vx;
+            ball->vx *= WALL_COLLISION_ENERGY_LOSS;
+        }
+        if (ball->x - ball->radius < -1.0f) {
+            ball->x = -1.0f + ball->radius;
+            ball->vx = -ball->vx;
+            ball->vx *= WALL_COLLISION_ENERGY_LOSS;
+        }
+
+        if (ball->y + ball->radius > 1.0f) {
+            ball->y = 1.0f - ball->radius;
+            ball->vy = -(ball->vy);
+            ball->vy *= WALL_COLLISION_ENERGY_LOSS;
+        }
+        if (ball->y - ball->radius < -1.0f) {
+            ball->y = -1.0f + ball->radius;
+            ball->vy = -(ball->vy);
+            ball->vy *= WALL_COLLISION_ENERGY_LOSS;
         }
     }
 
@@ -305,18 +337,15 @@ public:
         ball->y += ball->vy * timeDelta;
     }
 
-    void updateBallPositions(float timeDelta)
+    void update(float timeDelta)
     {
+        rebuildGrid();
+        handleParticleCollisions();
 
-        for (int ballIndex = 0; ballIndex < Balls.size(); ballIndex++) {
-            // Update position
-            Ball* ball = Balls[ballIndex];
-
-            // do the initial movement based on current velocity
-            handleWallCollisions(ball);
-            handleParticleCollisions(ball, ballIndex);
-            handleAcceleration(ball, timeDelta);
-            moveBall(ball, timeDelta);
+        for (auto* b : Balls) {
+            handleWallCollisions(b);
+            handleAcceleration(b, timeDelta);
+            moveBall(b, timeDelta);
         }
     }
 };
@@ -354,9 +383,9 @@ int main()
         float deltaTime = currentTime - lastTime;
         lastTime = currentTime;
 
-        balls.updateBallPositions(deltaTime);
+        balls.update(deltaTime);
         // Render
-        balls.renderBalls();
+        balls.render();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
