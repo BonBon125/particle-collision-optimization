@@ -9,12 +9,12 @@
 #include <unordered_map>
 #include <vector>
 
-const int NUM_CIRCLE_SEGMENTS = 100;
+const int NUM_CIRCLE_SEGMENTS = 6;
 const int NUM_BALLS = 10000;
 
 const float MIN_BALL_RADIUS = 0.01f;
 const float MAX_BALL_RADIUS = 0.01f;
-const float RESTITUTION = 0.4f;
+const float RESTITUTION = 0.9f;
 const float BORDER_THICKNESS = 0.001f;
 const float BALL_RADIUS = 0.02f;
 const float BALL_ACCELERATION = -0.0f;
@@ -195,10 +195,10 @@ public:
             float y = Balls[i]->y;
             float radius = Balls[i]->radius;
 
-            auto& bc = COLOURS.at("Black");
-
-            glColor3f(bc.r, bc.g, bc.b);
-            drawCircle(x, y, radius + BORDER_THICKNESS);
+            // auto& bc = COLOURS.at("Black");
+            //
+            // glColor3f(bc.r, bc.g, bc.b);
+            // drawCircle(x, y, radius + BORDER_THICKNESS);
 
             auto& c = COLOURS.at(BALL_COLOURS.at(Balls[i]->is_colliding));
 
@@ -375,8 +375,8 @@ int main()
     glOrtho(-1, 1, -1, 1, -1, 1);
     glMatrixMode(GL_MODELVIEW);
 
-    float lastTime = (float)glfwGetTime();
     BallCollection balls = BallCollection();
+    float lastTime = (float)glfwGetTime();
 
     while (!glfwWindowShouldClose(window)) {
         float currentTime = (float)glfwGetTime();
