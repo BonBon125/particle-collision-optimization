@@ -6,7 +6,7 @@ A real-time 2D physics simulation written in **C++** using **OpenGL** and **GLFW
 
 ## Demo
 
-![](gif-directory/demo.gif)
+![](gif-directory/output.gif)
 
 ---
 
