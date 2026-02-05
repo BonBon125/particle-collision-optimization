@@ -9,14 +9,16 @@
 #include <unordered_map>
 #include <vector>
 
-const int NUM_CIRCLE_SEGMENTS = 6;
-const int NUM_BALLS = 10000;
+const int WIDTH_HEIGHT = 1000;
+
+const int NUM_CIRCLE_SEGMENTS = 10;
+const int NUM_BALLS = 5000;
 
 const float MIN_BALL_RADIUS = 0.01f;
 const float MAX_BALL_RADIUS = 0.01f;
 const float RESTITUTION = 0.9f;
 const float BORDER_THICKNESS = 0.001f;
-const float BALL_RADIUS = 0.02f;
+const float BALL_RADIUS = 0.01f;
 const float BALL_ACCELERATION = -0.0f;
 const float WALL_COLLISION_ENERGY_LOSS = 1.00f;
 
@@ -27,10 +29,13 @@ const float CELL_SIZE = MAX_BALL_RADIUS * 2.5f;
 const int GRID_WIDTH = int((WORLD_MAX - WORLD_MIN) / CELL_SIZE) + 1;
 const int GRID_HEIGHT = GRID_WIDTH;
 
+const float MAX_BALL_SPEED = 0.05f;
+
 // Random number generation
 std::random_device rd;
 std::default_random_engine gen(rd());
-std::uniform_real_distribution<float> dist(-1.0, 1.0);
+std::uniform_real_distribution<float> velocity_dist(-MAX_BALL_SPEED, MAX_BALL_SPEED);
+std::uniform_real_distribution<float> position_dist(WORLD_MIN, WORLD_MAX);
 std::uniform_real_distribution<float> radius_dist(MIN_BALL_RADIUS, MAX_BALL_RADIUS);
 
 // Colour customisation
@@ -91,8 +96,8 @@ const std::unordered_map<std::string, Colour> COLOURS = {
 };
 
 const std::unordered_map<bool, std::string> BALL_COLOURS = {
-    { true, "Yellow" },
-    { false, "Yellow" }
+    { true, "Red" },
+    { false, "Teal" }
 };
 std::string BACKGROUND_COLOUR = "Black";
 
@@ -139,10 +144,10 @@ private:
     Ball* createBall()
     {
         Ball* newBall = new Ball;
-        newBall->x = dist(gen);
-        newBall->y = dist(gen);
-        newBall->vx = dist(gen);
-        newBall->vy = dist(gen);
+        newBall->x = position_dist(gen);
+        newBall->y = position_dist(gen);
+        newBall->vx = velocity_dist(gen);
+        newBall->vy = velocity_dist(gen);
         newBall->radius = radius_dist(gen);
         return newBall;
     }
@@ -308,27 +313,33 @@ public:
 
     void handleWallCollisions(Ball* ball)
     {
+        bool colliding = false;
         if (ball->x + ball->radius > 1.0f) {
             ball->x = 1.0f - ball->radius;
             ball->vx = -ball->vx;
             ball->vx *= WALL_COLLISION_ENERGY_LOSS;
+            colliding = true;
         }
         if (ball->x - ball->radius < -1.0f) {
             ball->x = -1.0f + ball->radius;
             ball->vx = -ball->vx;
             ball->vx *= WALL_COLLISION_ENERGY_LOSS;
+            colliding = true;
         }
 
         if (ball->y + ball->radius > 1.0f) {
             ball->y = 1.0f - ball->radius;
             ball->vy = -(ball->vy);
             ball->vy *= WALL_COLLISION_ENERGY_LOSS;
+            colliding = true;
         }
         if (ball->y - ball->radius < -1.0f) {
             ball->y = -1.0f + ball->radius;
             ball->vy = -(ball->vy);
             ball->vy *= WALL_COLLISION_ENERGY_LOSS;
+            colliding = true;
         }
+        ball->is_colliding = (ball->is_colliding) ? true : colliding;
     }
 
     void moveBall(Ball* ball, float timeDelta)
@@ -361,7 +372,7 @@ int main()
     if (!glfwInit())
         return -1;
 
-    GLFWwindow* window = glfwCreateWindow(800, 800, "Bouncing Ball", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(WIDTH_HEIGHT, WIDTH_HEIGHT, "Bouncing Ball", nullptr, nullptr);
     if (!window) {
         glfwTerminate();
         return -1;
@@ -375,9 +386,15 @@ int main()
     glOrtho(-1, 1, -1, 1, -1, 1);
     glMatrixMode(GL_MODELVIEW);
 
-    BallCollection balls = BallCollection();
-    float lastTime = (float)glfwGetTime();
+    glfwSwapBuffers(window);
+    glfwPollEvents();
 
+    BallCollection balls = BallCollection();
+
+    int x;
+    std::cin >> x;
+
+    float lastTime = (float)glfwGetTime();
     while (!glfwWindowShouldClose(window)) {
         float currentTime = (float)glfwGetTime();
         float deltaTime = currentTime - lastTime;
