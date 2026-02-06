@@ -1,12 +1,13 @@
-# Bouncing Balls Physics Simulation
+# Particle System Optimisation
 
-A real-time 2D physics simulation written in **C++** using **OpenGL** and **GLFW**, featuring multiple balls with elastic collisions, wall interactions, and configurable visual styling.
+A real-time 2D particle physics simulation written in **C++** using **OpenGL** and **GLFW**, featuring multiple balls with elastic collisions, wall interactions, and configurable visual styling.
 
 ---
 
 ## Demo
 
 ![](gif-directory/output.gif)
+![](gif-directory/demo.gif)
 
 ---
 
