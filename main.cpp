@@ -1,20 +1,30 @@
 #include <GLFW/glfw3.h>
+#include <array>
 #include <bits/stdc++.h>
 #include <cmath>
 #include <cstdio>
 #include <ctime>
+#include <execution>
 #include <iostream>
 #include <random>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
+// TODO: We want to be able to see different systems being used
+//       To do this, we need to separate the spacial partitioning implimentation from the crude solution
+//       Look into templates and define constraints on what every ball class should have
+//       Base class should be ParticleSystem
+//       We then extend this by adding polymorphic functions to subclasses
+//       Base class needs an array of particles
+//
+
 const int WIDTH_HEIGHT = 1000;
 
 const int NUM_CIRCLE_SEGMENTS = 10;
-const int NUM_BALLS = 5000;
+const int NUM_PARTICLES = 10000;
 
-const float MIN_BALL_RADIUS = 0.01f;
+const float MIN_BALL_RADIUS = 0.005f;
 const float MAX_BALL_RADIUS = 0.01f;
 const float RESTITUTION = 0.9f;
 const float BORDER_THICKNESS = 0.001f;
@@ -132,6 +142,74 @@ struct Ball {
     bool is_colliding = false;
 };
 
+// TODO: This is where im putting the code for the new baseclass of the particles
+
+// --------------------------------------------------------------------------------------
+
+struct Particle {
+    float x, y;
+    float vx, vy;
+    float radius;
+    bool is_colliding = false;
+};
+
+class ParticleSystem {
+private:
+    // This class will have functions that behave differently depending on what version it is
+    // For example the crude version will update the particles different to another
+    // Basics of the system are as follows:
+    // Handle particle - particle collisions
+    // Handle particle - wall collisions
+    // Handle accelaration of the particle
+    // Move the particle
+
+    // To be accurate we dont want to change the position of the particle until the move particle command is called
+    // This means when updating velocity in case of collision, we can only adjust the
+    // pos of the particle to be just touching, no more no less
+
+    std::array<Particle*, NUM_PARTICLES> particles;
+
+    Particle* createParticle()
+    {
+        Particle* newParticle = new Particle;
+        newParticle->x = position_dist(gen);
+        newParticle->y = position_dist(gen);
+        newParticle->vx = velocity_dist(gen);
+        newParticle->vy = velocity_dist(gen);
+        newParticle->radius = radius_dist(gen);
+        return newParticle;
+    }
+
+public:
+    ParticleSystem()
+    {
+        for (int i = 0; i < NUM_PARTICLES; i++) {
+            particles[i] = createParticle();
+        }
+    }
+
+    void render()
+    {
+        clearScreen();
+        glLoadIdentity();
+        for (int i = 0; i < particles.size(); i++) {
+            float x = particles[i]->x;
+            float y = particles[i]->y;
+            float radius = particles[i]->radius;
+            auto& c = COLOURS.at(BALL_COLOURS.at(particles[i]->is_colliding));
+
+            glColor3f(c.r, c.g, c.b);
+            drawCircle(x, y, radius);
+        }
+    }
+    void update(float timeDelta)
+    {
+        return;
+    }
+};
+
+// --------------------------------------------------------------------------------------
+
 class BallCollection {
 private:
     std::vector<Ball*> Balls;
@@ -153,7 +231,7 @@ private:
     }
 
 public:
-    BallCollection(int numBalls = NUM_BALLS)
+    BallCollection(int numBalls = NUM_PARTICLES)
     {
         Balls.resize(numBalls);
         for (int i = 0; i < numBalls; i++) {
@@ -192,7 +270,6 @@ public:
 
     void render()
     {
-
         clearScreen();
         glLoadIdentity();
         for (int i = 0; i < Balls.size(); i++) {
@@ -389,10 +466,12 @@ int main()
     glfwSwapBuffers(window);
     glfwPollEvents();
 
-    BallCollection balls = BallCollection();
+    // BallCollection balls = BallCollection();
 
-    int x;
-    std::cin >> x;
+    ParticleSystem particleSystem = ParticleSystem();
+
+    // int x;
+    // std::cin >> x;
 
     float lastTime = (float)glfwGetTime();
     while (!glfwWindowShouldClose(window)) {
@@ -400,9 +479,11 @@ int main()
         float deltaTime = currentTime - lastTime;
         lastTime = currentTime;
 
-        balls.update(deltaTime);
-        // Render
-        balls.render();
+        // balls.update(deltaTime);
+        // // Render
+        // balls.render();
+        particleSystem.update(deltaTime);
+        particleSystem.render();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
