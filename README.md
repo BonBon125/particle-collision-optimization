@@ -7,7 +7,6 @@ A real-time 2D particle physics simulation written in **C++** using **OpenGL** a
 ## Demo
 
 ![](gif-directory/output.gif)
-![](gif-directory/demo.gif)
 
 ---
 

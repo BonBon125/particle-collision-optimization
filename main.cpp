@@ -6,7 +6,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
-#include <execution>
 #include <iostream>
 #include <random>
 #include <string>
@@ -15,11 +14,11 @@
 
 const int WIDTH_HEIGHT = 1000;
 
-const int NUM_CIRCLE_SEGMENTS = 100;
-const int NUM_PARTICLES = 10000;
+const int NUM_CIRCLE_SEGMENTS = 10;
+const int NUM_PARTICLES = 30000;
 
-const float MIN_BALL_RADIUS = 0.005f;
-const float MAX_BALL_RADIUS = 0.01f;
+const float MIN_BALL_RADIUS = 0.0015f;
+const float MAX_BALL_RADIUS = 0.0025f;
 const float RESTITUTION = 0.9f;
 const float BORDER_THICKNESS = 0.001f;
 const float BALL_RADIUS = 0.01f;
@@ -128,17 +127,6 @@ void clearScreen()
     glClearColor(c.r, c.g, c.b, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 }
-
-// TODO: We want to be able to see different systems being used
-//       To do this, we need to separate the spacial partitioning implimentation from the crude solution
-//       Look into templates and define constraints on what every ball class should have
-//       Base class should be ParticleSystem
-//       We then extend this by adding polymorphic functions to subclasses
-//       Base class needs an array of particles
-
-// TODO: This is where im putting the code for the new baseclass of the particles
-
-// --------------------------------------------------------------------------------------
 
 struct Particle {
     float x, y;
@@ -341,18 +329,12 @@ private:
     }
     void handleParticleCollisions()
     {
-        // First assume no balls are colliding
-        for (Particle* p : mParticles) {
-            p->is_colliding = false;
-        }
+        resetParticleCollisions();
 
         for (int i = 0; i < NUM_PARTICLES; i++) {
             // For every ball
             Particle* p = mParticles[i];
 
-            // Calculate the grid square the ball is in
-            // int cx = cellX(p->x);
-            // int cy = cellY(p->y);
             int cx = std::clamp(cellX(p->x), 0, GRID_WIDTH - 1);
             int cy = std::clamp(cellY(p->y), 0, GRID_HEIGHT - 1);
 
