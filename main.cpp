@@ -16,7 +16,7 @@
 const int WIDTH_HEIGHT = 1000;
 
 const int NUM_CIRCLE_SEGMENTS = 100;
-const int NUM_PARTICLES = 1000;
+const int NUM_PARTICLES = 10000;
 
 const float MIN_BALL_RADIUS = 0.005f;
 const float MAX_BALL_RADIUS = 0.01f;
@@ -129,13 +129,6 @@ void clearScreen()
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
-struct Ball {
-    float x, y;
-    float vx, vy;
-    float radius;
-    bool is_colliding = false;
-};
-
 // TODO: We want to be able to see different systems being used
 //       To do this, we need to separate the spacial partitioning implimentation from the crude solution
 //       Look into templates and define constraints on what every ball class should have
@@ -155,19 +148,7 @@ struct Particle {
 };
 
 class ParticleSystem {
-private:
-    // This class will have functions that behave differently depending on what version it is
-    // For example the crude version will update the particles different to another
-    // Basics of the system are as follows:
-    // Handle particle - particle collisions
-    // Handle particle - wall collisions
-    // Handle accelaration of the particle
-    // Move the particle
-
-    // To be accurate we dont want to change the position of the particle until the move particle command is called
-    // This means when updating velocity in case of collision, we can only adjust the
-    // pos of the particle to be just touching, no more no less
-
+protected:
     std::array<Particle*, NUM_PARTICLES> mParticles;
 
     Particle* createParticle()
@@ -183,7 +164,6 @@ private:
 
     bool areTouching(Particle* a, Particle* b)
     {
-        // Can use std::hypot() instead
         float dx = a->x - b->x;
         float dy = a->y - b->y;
         float hypot = std::hypot(dx, dy);
@@ -198,7 +178,7 @@ private:
         }
     }
 
-    void resolveCollision(Particle* particle1, Particle* particle2)
+    void resolveParticleCollision(Particle* particle1, Particle* particle2)
     {
         // Vector between centers
         float dx = particle2->x - particle1->x;
@@ -225,8 +205,8 @@ private:
 
         // Equal mass elastic collision → swap normal components
         // Equal mass inelastic collision using coefficient of restitution
-        float v1n_after = (v1n + v2n - RESTITUTION * (v1n - v2n)) * 0.5f;
-        float v2n_after = (v1n + v2n + RESTITUTION * (v1n - v2n)) * 0.5f;
+        float v1n_after = (v1n + v2n - 1.0 * (v1n - v2n)) * 0.5f;
+        float v2n_after = (v1n + v2n + 1.0 * (v1n - v2n)) * 0.5f;
 
         // Convert scalar normal/tangent velocities back to vectors
         particle1->vx = v1n_after * nx + v1t * tx;
@@ -248,24 +228,9 @@ private:
         particle1->is_colliding = true;
         particle2->is_colliding = true;
     }
-    void handleParticleCollisions()
-    {
-        resetParticleCollisions();
-
-        for (int i = 0; i < NUM_PARTICLES; i++) {
-            for (int j = i; j < NUM_PARTICLES; j++) {
-                if (areTouching(mParticles[i], mParticles[j])) {
-                    resolveCollision(mParticles[i], mParticles[j]);
-                }
-            }
-        }
-    }
 
     void handleWallCollisions(Particle* particle)
     {
-        // instead we can clamp the x and y of the particle
-        // then we check if the x is out of range, if so negate it
-        // if the y is out of range, negate that
         float abs_x_boundary = WORLD_MAX - particle->radius;
         float abs_y_boundary = WORLD_MAX - particle->radius;
 
@@ -275,8 +240,6 @@ private:
         particle->vx = (std::abs(particle->x) == abs_x_boundary) ? -particle->vx : particle->vx;
         particle->vy = (std::abs(particle->y) == abs_y_boundary) ? -particle->vy : particle->vy;
 
-        // checks if the particle's x or y are on a wall boundary and sets it to true if so,
-        // if not then it does not change
         particle->is_colliding = (std::abs(particle->x) == abs_x_boundary || std::abs(particle->y) == abs_y_boundary) ? true : particle->is_colliding;
     }
 
@@ -309,6 +272,28 @@ public:
         }
     }
 
+    virtual void update(float timeDelta) = 0;
+};
+
+// We want to try and create a subclass that extends the ParticleSystem
+// This subclass should just have the adjustment for spatial partitioning
+
+class ParticleSystem_V1 : public ParticleSystem {
+private:
+    void handleParticleCollisions()
+    {
+        resetParticleCollisions();
+
+        for (int i = 0; i < NUM_PARTICLES; i++) {
+            for (int j = i; j < NUM_PARTICLES; j++) {
+                if (areTouching(mParticles[i], mParticles[j])) {
+                    resolveParticleCollision(mParticles[i], mParticles[j]);
+                }
+            }
+        }
+    }
+
+public:
     void update(float timeDelta)
     {
         handleParticleCollisions();
@@ -320,9 +305,8 @@ public:
     }
 };
 
-class BallCollection {
+class ParticleSystem_V2 : public ParticleSystem {
 private:
-    std::vector<Ball*> Balls;
     std::vector<std::vector<int>> grid;
 
     int cellX(float x)
@@ -338,27 +322,6 @@ private:
         return y * GRID_WIDTH + x;
     }
 
-    Ball* createBall()
-    {
-        Ball* newBall = new Ball;
-        newBall->x = position_dist(gen);
-        newBall->y = position_dist(gen);
-        newBall->vx = velocity_dist(gen);
-        newBall->vy = velocity_dist(gen);
-        newBall->radius = radius_dist(gen);
-        return newBall;
-    }
-
-public:
-    BallCollection(int numBalls = NUM_PARTICLES)
-    {
-        Balls.resize(numBalls);
-        for (int i = 0; i < numBalls; i++) {
-            Balls[i] = createBall();
-        }
-        grid.resize(GRID_WIDTH * GRID_HEIGHT);
-    }
-
     void rebuildGrid()
     {
         // Remove all values in the grid
@@ -367,107 +330,31 @@ public:
         }
 
         // Add each ball to the corresponding gridbox
-        for (int i = 0; i < Balls.size(); i++) {
-            Ball* b = Balls[i];
+        for (int i = 0; i < NUM_PARTICLES; i++) {
+            Particle* p = mParticles[i];
 
             // Convert the x and y values to the grid x and y values
-            // Clamp ensures the values do not exceed the limits provided
-            int cx = std::clamp(cellX(b->x), 0, GRID_WIDTH - 1);
-            int cy = std::clamp(cellY(b->y), 0, GRID_HEIGHT - 1);
+            int cx = std::clamp(cellX(p->x), 0, GRID_WIDTH - 1);
+            int cy = std::clamp(cellY(p->y), 0, GRID_HEIGHT - 1);
             grid[cellIndex(cx, cy)].push_back(i);
         }
     }
-
-    bool touching(Ball* a, Ball* b)
-    {
-        // Returns wether the two balls are touching
-        float dx = a->x - b->x;
-        float dy = a->y - b->y;
-        float r = a->radius + b->radius;
-        return dx * dx + dy * dy <= r * r;
-    }
-
-    void render()
-    {
-        clearScreen();
-        glLoadIdentity();
-        for (int i = 0; i < Balls.size(); i++) {
-            float x = Balls[i]->x;
-            float y = Balls[i]->y;
-            float radius = Balls[i]->radius;
-
-            auto& c = COLOURS.at(BALL_COLOURS.at(Balls[i]->is_colliding));
-
-            glColor3f(c.r, c.g, c.b);
-            drawCircle(x, y, radius);
-        }
-    }
-
-    void resolveCollision(Ball* ball1, Ball* ball2)
-    {
-        // Vector between centers
-        float dx = ball2->x - ball1->x;
-        float dy = ball2->y - ball1->y;
-        float distance = std::sqrt(dx * dx + dy * dy);
-        if (distance == 0.0f) {
-            return; // Avoid division by zero
-        }
-
-        // Normal vector
-        float nx = dx / distance;
-        float ny = dy / distance;
-
-        // Tangent vector
-        float tx = -ny;
-        float ty = nx;
-
-        // Project velocities onto normal and tangent
-        float v1n = ball1->vx * nx + ball1->vy * ny;
-        float v1t = ball1->vx * tx + ball1->vy * ty;
-
-        float v2n = ball2->vx * nx + ball2->vy * ny;
-        float v2t = ball2->vx * tx + ball2->vy * ty;
-
-        // Equal mass elastic collision → swap normal components
-        // Equal mass inelastic collision using coefficient of restitution
-        float v1n_after = (v1n + v2n - RESTITUTION * (v1n - v2n)) * 0.5f;
-        float v2n_after = (v1n + v2n + RESTITUTION * (v1n - v2n)) * 0.5f;
-
-        // Convert scalar normal/tangent velocities back to vectors
-        ball1->vx = v1n_after * nx + v1t * tx;
-        ball1->vy = v1n_after * ny + v1t * ty;
-
-        ball2->vx = v2n_after * nx + v2t * tx;
-        ball2->vy = v2n_after * ny + v2t * ty;
-
-        // Optional: positional correction to prevent sticking
-        float overlap = (ball1->radius + ball2->radius) - distance;
-        if (overlap > 0.0f) {
-            float correction = overlap * 0.5f;
-            ball1->x -= nx * correction;
-            ball1->y -= ny * correction;
-            ball2->x += nx * correction;
-            ball2->y += ny * correction;
-        }
-
-        ball1->is_colliding = true;
-        ball2->is_colliding = true;
-    }
-
     void handleParticleCollisions()
     {
         // First assume no balls are colliding
-        for (auto* b : Balls) {
-            b->is_colliding = false;
+        for (Particle* p : mParticles) {
+            p->is_colliding = false;
         }
 
-        for (int i = 0; i < Balls.size(); i++) {
+        for (int i = 0; i < NUM_PARTICLES; i++) {
             // For every ball
-            Ball* b = Balls[i];
+            Particle* p = mParticles[i];
 
             // Calculate the grid square the ball is in
-            int cx = cellX(b->x);
-            int cy = cellY(b->y);
+            // int cx = cellX(p->x);
+            // int cy = cellY(p->y);
+            int cx = std::clamp(cellX(p->x), 0, GRID_WIDTH - 1);
+            int cy = std::clamp(cellY(p->y), 0, GRID_HEIGHT - 1);
 
             // Iterate over all the grid squares that are adjacent to the one the ball is in
             for (int dx = -1; dx <= 1; dx++) {
@@ -485,8 +372,8 @@ public:
                             continue;
                         }
                         // If they are touching,
-                        if (touching(b, Balls[j])) {
-                            resolveCollision(b, Balls[j]);
+                        if (areTouching(p, mParticles[j])) {
+                            resolveParticleCollision(p, mParticles[j]);
                         }
                     }
                 }
@@ -494,60 +381,19 @@ public:
         }
     }
 
-    void handleAcceleration(Ball* ball, float dt)
+public:
+    ParticleSystem_V2()
     {
-        // For each ball, apply acceleration to update
-        // We have initial velocity, time and acceleration
-        // Calculate final velocity
-        ball->vy = ball->vy + BALL_ACCELERATION * dt;
+        grid.resize(GRID_WIDTH * GRID_HEIGHT);
     }
-
-    void handleWallCollisions(Ball* ball)
-    {
-        bool colliding = false;
-        if (ball->x + ball->radius > 1.0f) {
-            ball->x = 1.0f - ball->radius;
-            ball->vx = -ball->vx;
-            ball->vx *= WALL_COLLISION_ENERGY_LOSS;
-            colliding = true;
-        }
-        if (ball->x - ball->radius < -1.0f) {
-            ball->x = -1.0f + ball->radius;
-            ball->vx = -ball->vx;
-            ball->vx *= WALL_COLLISION_ENERGY_LOSS;
-            colliding = true;
-        }
-
-        if (ball->y + ball->radius > 1.0f) {
-            ball->y = 1.0f - ball->radius;
-            ball->vy = -(ball->vy);
-            ball->vy *= WALL_COLLISION_ENERGY_LOSS;
-            colliding = true;
-        }
-        if (ball->y - ball->radius < -1.0f) {
-            ball->y = -1.0f + ball->radius;
-            ball->vy = -(ball->vy);
-            ball->vy *= WALL_COLLISION_ENERGY_LOSS;
-            colliding = true;
-        }
-        ball->is_colliding = (ball->is_colliding) ? true : colliding;
-    }
-
-    void moveBall(Ball* ball, float timeDelta)
-    {
-        ball->x += ball->vx * timeDelta;
-        ball->y += ball->vy * timeDelta;
-    }
-
     void update(float timeDelta)
     {
         rebuildGrid();
         handleParticleCollisions();
 
-        for (auto* b : Balls) {
-            handleWallCollisions(b);
-            handleAcceleration(b, timeDelta);
-            moveBall(b, timeDelta);
+        for (Particle* p : mParticles) {
+            handleWallCollisions(p);
+            moveParticle(p, timeDelta);
         }
     }
 };
@@ -580,10 +426,7 @@ int main()
     glfwSwapBuffers(window);
     glfwPollEvents();
 
-    ParticleSystem particleSystem = ParticleSystem();
-
-    // int x;
-    // std::cin >> x;
+    ParticleSystem_V2 particleSystem = ParticleSystem_V2();
 
     float lastTime = (float)glfwGetTime();
     while (!glfwWindowShouldClose(window)) {
