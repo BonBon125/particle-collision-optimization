@@ -1,8 +1,10 @@
 #include <GLFW/glfw3.h>
+#include <algorithm>
 #include <array>
 #include <bits/stdc++.h>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <ctime>
 #include <execution>
 #include <iostream>
@@ -261,33 +263,21 @@ private:
 
     void handleWallCollisions(Particle* particle)
     {
-        bool colliding = false;
-        if (particle->x + particle->radius > 1.0f) {
-            particle->x = 1.0f - particle->radius;
-            particle->vx = -particle->vx;
-            particle->vx *= WALL_COLLISION_ENERGY_LOSS;
-            colliding = true;
-        }
-        if (particle->x - particle->radius < -1.0f) {
-            particle->x = -1.0f + particle->radius;
-            particle->vx = -particle->vx;
-            particle->vx *= WALL_COLLISION_ENERGY_LOSS;
-            colliding = true;
-        }
+        // instead we can clamp the x and y of the particle
+        // then we check if the x is out of range, if so negate it
+        // if the y is out of range, negate that
+        float abs_x_boundary = WORLD_MAX - particle->radius;
+        float abs_y_boundary = WORLD_MAX - particle->radius;
 
-        if (particle->y + particle->radius > 1.0f) {
-            particle->y = 1.0f - particle->radius;
-            particle->vy = -(particle->vy);
-            particle->vy *= WALL_COLLISION_ENERGY_LOSS;
-            colliding = true;
-        }
-        if (particle->y - particle->radius < -1.0f) {
-            particle->y = -1.0f + particle->radius;
-            particle->vy = -(particle->vy);
-            particle->vy *= WALL_COLLISION_ENERGY_LOSS;
-            colliding = true;
-        }
-        particle->is_colliding = (particle->is_colliding) ? true : colliding;
+        particle->x = std::clamp(particle->x, -abs_x_boundary, abs_x_boundary);
+        particle->y = std::clamp(particle->y, -abs_y_boundary, abs_y_boundary);
+
+        particle->vx = (std::abs(particle->x) == abs_x_boundary) ? -particle->vx : particle->vx;
+        particle->vy = (std::abs(particle->y) == abs_y_boundary) ? -particle->vy : particle->vy;
+
+        // checks if the particle's x or y are on a wall boundary and sets it to true if so,
+        // if not then it does not change
+        particle->is_colliding = (std::abs(particle->x) == abs_x_boundary || std::abs(particle->y) == abs_y_boundary) ? true : particle->is_colliding;
     }
 
     void moveParticle(Particle* particle, float timeDelta)
@@ -329,10 +319,6 @@ public:
         }
     }
 };
-
-// Naming Convention for the subclasses
-
-// --------------------------------------------------------------------------------------
 
 class BallCollection {
 private:
