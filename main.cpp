@@ -1,3 +1,4 @@
+#include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <array>
@@ -7,10 +8,15 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <ostream>
 #include <random>
 #include <string>
+#include <unistd.h>
 #include <unordered_map>
 #include <vector>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 const int WIDTH_HEIGHT = 1000;
 
@@ -386,6 +392,71 @@ void displayFPS(float dt)
     std::cout << "\r" << fps << std::flush;
 }
 
+// TODO: We want to take the frames from openGL then create pngs according to those images
+
+class PNGRecorder {
+private:
+    int width = WIDTH_HEIGHT;
+    int height = WIDTH_HEIGHT;
+    int frame = 0;
+    bool recording = false;
+
+    // We need to have two buffers for the pixel values
+    // One for the values given by the openGL api
+    // The other to flip the image (OpenGL gives the pixel values upside down)
+
+    std::vector<unsigned char> rgbBuffer;
+    std::vector<unsigned char> flippedBuffer;
+
+    // will be using stb_image_write
+
+public:
+    void start()
+    {
+        frame = 0;
+        recording = true;
+
+        rgbBuffer.resize(width * height * 3);
+        flippedBuffer.resize(width * height * 3);
+
+        std::cout << "\nPNG recording started\n";
+    }
+    void captureFrame()
+    {
+        if (!recording) {
+            return;
+        }
+
+        glPixelStorei(GL_PACK_ALIGNMENT, 1); // <-- important
+
+        glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, rgbBuffer.data());
+
+        for (int y = 0; y < height; y++) {
+            memcpy(
+                &flippedBuffer[y * width * 3],
+                &rgbBuffer[(height - 1 - y) * width * 3],
+                width * 3);
+        }
+
+        std::ostringstream name;
+        name << "images/frame_" << std::setw(5) << std::setfill('0') << frame++ << ".png";
+
+        stbi_write_png(
+            name.str().c_str(),
+            width,
+            height,
+            3,
+            flippedBuffer.data(),
+            width * 3);
+    }
+
+    void stop()
+    {
+        recording = false;
+        std::cout << "\nPNG recording stopped. Saved " << frame << " frames.\n";
+    }
+};
+
 int main()
 {
     if (!glfwInit())
@@ -410,6 +481,9 @@ int main()
 
     ParticleSystem_V2 particleSystem = ParticleSystem_V2();
 
+    PNGRecorder pngRecorder = PNGRecorder();
+    pngRecorder.start();
+
     float lastTime = (float)glfwGetTime();
     while (!glfwWindowShouldClose(window)) {
         float currentTime = (float)glfwGetTime();
@@ -419,12 +493,14 @@ int main()
         particleSystem.update(deltaTime);
         particleSystem.render();
 
+        // displayFPS(deltaTime);
+        pngRecorder.captureFrame();
+
         glfwSwapBuffers(window);
         glfwPollEvents();
-
-        displayFPS(deltaTime);
     }
 
+    pngRecorder.stop();
     glfwTerminate();
     return 0;
 }
