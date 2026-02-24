@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
+#include <filesystem>
 #include <iostream>
 #include <ostream>
 #include <random>
@@ -17,6 +18,8 @@
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
+
+const float RECORDING_DURATION = 4.0f;
 
 const int WIDTH_HEIGHT = 1000;
 
@@ -394,66 +397,129 @@ void displayFPS(float dt)
 
 // TODO: We want to take the frames from openGL then create pngs according to those images
 
-class PNGRecorder {
-private:
+struct ThreadedPNGRecorder {
     int width = WIDTH_HEIGHT;
     int height = WIDTH_HEIGHT;
-    int frame = 0;
-    bool recording = false;
+    int fps = 60;
+    std::atomic<bool> recording { false };
+    std::atomic<bool> done { false };
+    int frameCounter = 0;
 
-    // We need to have two buffers for the pixel values
-    // One for the values given by the openGL api
-    // The other to flip the image (OpenGL gives the pixel values upside down)
+    std::queue<std::vector<unsigned char>> frameQueue;
+    std::mutex queueMutex;
+    std::condition_variable queueCV;
+    std::thread writerThread;
 
-    std::vector<unsigned char> rgbBuffer;
-    std::vector<unsigned char> flippedBuffer;
-
-    // will be using stb_image_write
-
-public:
-    void start()
+    // Start recording
+    void start(int fps_ = 60)
     {
-        frame = 0;
+        fps = fps_;
+        frameCounter = 0;
         recording = true;
+        done = false;
 
-        rgbBuffer.resize(width * height * 3);
-        flippedBuffer.resize(width * height * 3);
-
-        std::cout << "\nPNG recording started\n";
+        writerThread = std::thread([this]() { this->threadedWriter(); });
+        std::cout << "\nRecording started.\n";
     }
+
+    // Capture frame (non-blocking)
     void captureFrame()
     {
-        if (!recording) {
+        if (!recording)
             return;
-        }
 
-        glPixelStorei(GL_PACK_ALIGNMENT, 1); // <-- important
+        std::vector<unsigned char> rgbBuffer(width * height * 3);
+        std::vector<unsigned char> flippedBuffer(width * height * 3);
 
         glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, rgbBuffer.data());
 
         for (int y = 0; y < height; y++) {
-            memcpy(
-                &flippedBuffer[y * width * 3],
+            memcpy(&flippedBuffer[y * width * 3],
                 &rgbBuffer[(height - 1 - y) * width * 3],
                 width * 3);
         }
 
-        std::ostringstream name;
-        name << "images/frame_" << std::setw(5) << std::setfill('0') << frame++ << ".png";
-
-        stbi_write_png(
-            name.str().c_str(),
-            width,
-            height,
-            3,
-            flippedBuffer.data(),
-            width * 3);
+        // Push to queue
+        {
+            std::lock_guard<std::mutex> lock(queueMutex);
+            frameQueue.push(std::move(flippedBuffer));
+        }
+        queueCV.notify_one();
     }
 
+    // Stop recording
     void stop()
     {
         recording = false;
-        std::cout << "\nPNG recording stopped. Saved " << frame << " frames.\n";
+        done = true;
+        queueCV.notify_all();
+        if (writerThread.joinable())
+            writerThread.join();
+        std::cout << "Recording stopped. Total frames: " << frameCounter << "\n";
+    }
+
+    // Thread function
+    void threadedWriter()
+    {
+        while (!done || !frameQueue.empty()) {
+            std::vector<unsigned char> frame;
+            {
+                std::unique_lock<std::mutex> lock(queueMutex);
+                queueCV.wait(lock, [this] { return !frameQueue.empty() || done; });
+                if (!frameQueue.empty()) {
+                    frame = std::move(frameQueue.front());
+                    frameQueue.pop();
+                } else
+                    continue;
+            }
+
+            // Build filename
+            std::ostringstream name;
+            name << "images/frame_" << std::setw(5) << std::setfill('0') << frameCounter++ << ".png";
+
+            stbi_write_png(name.str().c_str(), width, height, 3, frame.data(), width * 3);
+        }
+    }
+
+    // Export MP4 via ffmpeg
+    void exportMP4(const std::string& outputFile = "gif-directory/simulation.mp4")
+    {
+        stop(); // ensure recording stopped
+
+        std::ostringstream cmd;
+        cmd << "ffmpeg -y -framerate " << fps
+            << " -i images/frame_%05d.png -pix_fmt yuv420p "
+            << outputFile;
+
+        std::cout << "Exporting MP4... this may take a moment.\n";
+        std::system(cmd.str().c_str());
+        std::cout << "Export complete: " << outputFile << "\n";
+    }
+
+    void exportGIF(const std::string& outputFile = "gif-directory/simulation.gif")
+    {
+        stop(); // make sure recording fully stopped + writer thread finished
+
+        std::ostringstream cmd;
+
+        // High-quality GIF via palette generation (much better colours)
+        cmd << "ffmpeg -y -framerate " << fps << " -i images/frame_%05d.png "
+                                                 " -vf \"fps="
+            << fps << ",scale=800:-1:flags=lanczos,palettegen\" palette.png";
+
+        std::cout << "Generating GIF palette...\n";
+        std::system(cmd.str().c_str());
+
+        std::ostringstream cmd2;
+        cmd2 << "ffmpeg -y -framerate " << fps << " -i images/frame_%05d.png -i palette.png "
+                                                  " -lavfi \"fps="
+             << fps << ",scale=800:-1:flags=lanczos[x];[x][1:v]paletteuse\" "
+             << outputFile;
+
+        std::cout << "Exporting GIF...\n";
+        std::system(cmd2.str().c_str());
+
+        std::cout << "GIF saved as: " << outputFile << "\n";
     }
 };
 
@@ -481,8 +547,8 @@ int main()
 
     ParticleSystem_V2 particleSystem = ParticleSystem_V2();
 
-    PNGRecorder pngRecorder = PNGRecorder();
-    pngRecorder.start();
+    ThreadedPNGRecorder recorder;
+    recorder.start(60);
 
     float lastTime = (float)glfwGetTime();
     while (!glfwWindowShouldClose(window)) {
@@ -494,13 +560,22 @@ int main()
         particleSystem.render();
 
         // displayFPS(deltaTime);
-        pngRecorder.captureFrame();
+
+        // Capture frame every render
+        if (recorder.recording) {
+            recorder.captureFrame();
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
-    }
 
-    pngRecorder.stop();
+        if (currentTime > RECORDING_DURATION) {
+            glfwSetWindowShouldClose(window, true);
+        }
+    }
+    recorder.stop();
+    recorder.exportMP4();
+
     glfwTerminate();
     return 0;
 }
