@@ -1,5 +1,6 @@
 #!/bin/bash
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+	rm images/*
 	g++ main.cpp -lglfw -lGL -o bouncing_balls
 elif [[ "$OSTYPE" == "darwin"* ]]; then
 	clang++ main.cpp -std=c++17 -lglfw -framework OpenGL -o bouncing_balls

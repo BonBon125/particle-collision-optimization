@@ -7,7 +7,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
-#include <filesystem>
 #include <iostream>
 #include <ostream>
 #include <random>
@@ -24,10 +23,10 @@ const float RECORDING_DURATION = 4.0f;
 const int WIDTH_HEIGHT = 1000;
 
 const int NUM_CIRCLE_SEGMENTS = 10;
-const int NUM_PARTICLES = 30000;
+const int NUM_PARTICLES = 10000;
 
-const float MIN_BALL_RADIUS = 0.0015f;
-const float MAX_BALL_RADIUS = 0.0025f;
+const float MIN_BALL_RADIUS = 0.005f;
+const float MAX_BALL_RADIUS = 0.01f;
 const float RESTITUTION = 0.9f;
 const float BORDER_THICKNESS = 0.001f;
 const float BALL_RADIUS = 0.01f;
@@ -90,8 +89,7 @@ const std::unordered_map<std::string, Colour> COLOURS = {
 
     // Neutrals
     { "White", { 1.0f, 1.0f, 1.0f } },
-    { "Light Gray", { 0.8f, 0.8f, 0.8f } },
-    { "Gray", { 0.5f, 0.5f, 0.5f } },
+    { "Light Gray", { 0.8f, 0.8f, 0.8f } }, { "Gray", { 0.5f, 0.5f, 0.5f } },
     { "Dark Gray", { 0.2f, 0.2f, 0.2f } },
     { "Black", { 0.0f, 0.0f, 0.0f } },
 
@@ -559,7 +557,7 @@ int main()
         particleSystem.update(deltaTime);
         particleSystem.render();
 
-        // displayFPS(deltaTime);
+        displayFPS(deltaTime);
 
         // Capture frame every render
         if (recorder.recording) {
@@ -573,7 +571,6 @@ int main()
             glfwSetWindowShouldClose(window, true);
         }
     }
-    recorder.stop();
     recorder.exportMP4();
 
     glfwTerminate();
