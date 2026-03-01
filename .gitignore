@@ -1,3 +1,5 @@
 bouncing_balls
 *.png
-./images/*
+gif-directory/*.png
+gif-directory/*.gif
+images/
