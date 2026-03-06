@@ -1,105 +1,256 @@
-# Particle System Optimisation
+# High-Performance 2D Particle Collision Simulation (OpenGL + C++)
 
-A real-time 2D particle physics simulation written in **C++** using **OpenGL** and **GLFW**, featuring multiple balls with elastic collisions, wall interactions, and configurable visual styling.
-
----
-
-## Demo
-
+```{=html}
 <p align="center">
-  <img src="gif-directory/simulation.gif" width="600">
+```
+`<img src="gif-directory/simulation.gif" width="600">`{=html}
+```{=html}
 </p>
-
----
-
-## Features
-
-- Real-time rendering with **OpenGL**
-- Multiple independently moving balls
-- **Elastic and inelastic particle collisions** using a coefficient of restitution
-- Accurate **ball–ball collision resolution** with positional correction
-- **Wall collision handling** within normalized device coordinates
-- Configurable colours, ball count, and physics parameters
-- Live **FPS counter** printed to the console
-
----
-
-## Physics Overview
-
-Each ball is modeled with:
-- Position `(x, y)`
-- Velocity `(vx, vy)`
-- Radius
-- Optional acceleration
-
-The simulation includes:
-- **Particle–particle collisions** using normal and tangential velocity decomposition
-- **Wall collisions** with velocity inversion
-- Overlap correction to prevent sticking
-- Equal-mass collision assumptions
-
----
-
-## Controls
-
-There is no user input required.  
-The simulation starts automatically when the program is run.
-
----
-
-## Configuration
-
-Key parameters can be adjusted at the top of the source file:
-
-```cpp
-const int NUM_BALLS = 10;
-const float RESTITUTION = 0.9f;
-const float MIN_BALL_RADIUS = 0.01f;
-const float MAX_BALL_RADIUS = 0.01f;
 ```
+A high-performance **2D particle collision simulation** written in
+modern C++ using **OpenGL** and **GLFW**.\
+The project simulates thousands of particles with real-time rendering
+and collision detection while recording the simulation output to **PNG
+frames**, **MP4 video**, or **GIF**.
 
-You can also modify:
+The primary goal of the project is to explore **performance-oriented
+simulation techniques**, including **spatial partitioning**,
+**multithreaded frame encoding**, and **efficient collision
+resolution**.
 
-- Background colour
-- Ball colours
-- Border thickness
-- Window size
+The simulation renders up to **10,000 particles** and demonstrates two
+different collision detection strategies:
 
----
+-   A naive **O(n²)** implementation
+-   A **grid-based spatial partitioning** system that significantly
+    improves performance
 
-# Build and Run
+The rendered output can be exported as media using **FFmpeg** pipelines
+directly from the program.
 
-## Dependencies:
-- C++17 or later
-- OpenGL
-- GLFW
+------------------------------------------------------------------------
 
-## Comple (Linux/macOS)
-```bash
-./run.sh
-```
----
-## Rendering Details
-- Circles are rendered using triangle fans with configurable segment counts
+# Interesting Techniques
 
-- Each ball is drawn with a thin border for visual clarity
+## Spatial Partitioning with Uniform Grids
 
-- Rendering is done in normalized device coordinates using:
-```cpp
-    glOrtho(-1, 1, -1, 1, -1, 1);
-```
-- Colours are selected from a predefined colour map for easy customization
-- Immediate-mode OpenGL is used for simplicity and clarity
+The optimized particle system (`ParticleSystem_V2`) reduces collision
+checks using a **uniform spatial grid**.
 
----
+Instead of testing every particle against every other particle, the
+world is divided into cells. Each particle is assigned to a grid cell,
+and collision checks are performed only against particles in nearby
+cells.
 
-# Future Improvements
-- Add gravity and configurable acceleration
+This reduces the complexity from:
 
-- Support variable ball masses
+    O(n²)
 
-- Introduce user interaction (mouse and keyboard controls)
+to approximately:
 
-- Implement spatial partitioning for improved performance
+    O(n)
 
-- Add UI controls for runtime parameter tuning
+for evenly distributed particles.
+
+The grid is rebuilt every frame based on particle positions.
+
+------------------------------------------------------------------------
+
+## Elastic Collision Resolution
+
+Particle collisions are resolved using **vector projection** onto normal
+and tangent vectors.
+
+Velocity components along the collision normal are swapped while tangent
+components remain unchanged.
+
+This produces realistic **equal-mass elastic collisions**.
+
+Mathematically:
+
+    v_normal = v · n
+    v_tangent = v · t
+
+The implementation also includes **positional correction** to prevent
+particle overlap ("sticking").
+
+------------------------------------------------------------------------
+
+## Multithreaded Frame Recording
+
+Frame capture is performed on the **render thread**, while PNG encoding
+runs on a **dedicated writer thread**.
+
+Captured frames are pushed into a thread-safe queue:
+
+    std::queue<std::vector<unsigned char>>
+
+Synchronization is handled with:
+
+-   `std::mutex`
+-   `std::condition_variable`
+-   `std::atomic`
+
+This architecture prevents expensive image encoding from blocking the
+render loop.
+
+------------------------------------------------------------------------
+
+## OpenGL Framebuffer Capture
+
+The renderer captures raw pixel data using:
+
+    glReadPixels()
+
+The pixel buffer is vertically flipped and written to disk using
+**stb_image_write**.
+
+------------------------------------------------------------------------
+
+## Automatic Media Export via FFmpeg
+
+The recorder builds **FFmpeg commands dynamically** to convert captured
+PNG frames into:
+
+-   MP4 videos
+-   Optimized GIF animations
+
+GIF generation uses the **palette generation pipeline**:
+
+    palettegen → paletteuse
+
+This produces significantly better color quality and smaller files than
+naïve GIF conversion.
+
+------------------------------------------------------------------------
+
+# Libraries and Technologies
+
+This project uses several libraries that experienced developers may find
+interesting.
+
+### OpenGL
+
+Low-level graphics API used for rendering particles.
+
+https://www.opengl.org/
+
+------------------------------------------------------------------------
+
+### GLFW
+
+Handles window creation, input, and OpenGL context management.
+
+https://www.glfw.org/
+
+------------------------------------------------------------------------
+
+### stb_image_write
+
+A lightweight single-header library used to encode PNG images directly
+from memory buffers.
+
+https://github.com/nothings/stb
+
+------------------------------------------------------------------------
+
+### FFmpeg
+
+Used to convert image sequences into video and GIF formats.
+
+https://ffmpeg.org/
+
+------------------------------------------------------------------------
+
+### C++ Concurrency Utilities
+
+The recorder relies on modern C++ threading primitives:
+
+-   `std::thread`
+-   `std::atomic`
+-   `std::mutex`
+-   `std::condition_variable`
+
+Documentation:
+
+https://en.cppreference.com/w/cpp/thread
+
+------------------------------------------------------------------------
+
+# Project Structure
+
+    .
+    ├── images
+    ├── gif-directory
+    └── stb_image_write.h
+
+### images
+
+Stores PNG frames generated during recording.
+
+Frame filenames follow the format:
+
+    frame_00000.png
+    frame_00001.png
+    ...
+
+These images are later converted into media using FFmpeg.
+
+------------------------------------------------------------------------
+
+### gif-directory
+
+Stores exported media files generated from captured frames.
+
+Examples include:
+
+-   simulation GIFs used in documentation
+-   MP4 recordings of the simulation
+
+------------------------------------------------------------------------
+
+### stb_image_write.h
+
+Single-header image encoding library used to write PNG frames.
+
+------------------------------------------------------------------------
+
+# Rendering Overview
+
+Particles are drawn using **triangle fan primitives** to approximate
+circles.
+
+    GL_TRIANGLE_FAN
+
+The number of segments is configurable via:
+
+    NUM_CIRCLE_SEGMENTS
+
+This allows tuning between rendering quality and performance.
+
+------------------------------------------------------------------------
+
+# Simulation Characteristics
+
+  Property              Value
+  --------------------- ---------------------------
+  Particle count        10,000
+  Rendering             OpenGL
+  Collision detection   Grid spatial partitioning
+  Frame capture         OpenGL framebuffer
+  Output formats        PNG, MP4, GIF
+  Recording             Multithreaded
+
+------------------------------------------------------------------------
+
+# Development Notes
+
+The project is intentionally minimal and avoids external frameworks
+beyond GLFW.
+
+This makes it a good reference for:
+
+-   **high-performance particle simulations**
+-   **OpenGL rendering fundamentals**
+-   **multithreaded media encoding pipelines**
+-   **spatial partitioning algorithms**
