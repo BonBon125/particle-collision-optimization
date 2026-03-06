@@ -15,7 +15,7 @@ simulation techniques**, including **spatial partitioning**,
 **multithreaded frame encoding**, and **efficient collision
 resolution**.
 
-The simulation renders up to **10,000 particles** and demonstrates two
+The simulation renders up to **30,000 particles** and demonstrates two
 different collision detection strategies:
 
 -   A naive **O(n²)** implementation
@@ -231,7 +231,7 @@ This allows tuning between rendering quality and performance.
 
   Property              Value
   --------------------- ---------------------------
-  Particle count        10,000
+  Particle count        30,000
   Rendering             OpenGL
   Collision detection   Grid spatial partitioning
   Frame capture         OpenGL framebuffer

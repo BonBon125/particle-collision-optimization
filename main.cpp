@@ -23,10 +23,10 @@ const float RECORDING_DURATION = 2.0f;
 const int WIDTH_HEIGHT = 1000;
 
 const int NUM_CIRCLE_SEGMENTS = 10;
-const int NUM_PARTICLES = 10000;
+const int NUM_PARTICLES = 30000;
 
-const float MIN_BALL_RADIUS = 0.005f;
-const float MAX_BALL_RADIUS = 0.01f;
+const float MIN_BALL_RADIUS = 0.0025f;
+const float MAX_BALL_RADIUS = 0.005f;
 const float RESTITUTION = 0.9f;
 const float BORDER_THICKNESS = 0.001f;
 const float BALL_RADIUS = 0.01f;
@@ -588,17 +588,17 @@ int main()
 
     glfwTerminate();
 
-    // Check if we want to export as MP4 or a gif
+    if (record_option == 'y') {
+        std::cout << "\nDo you want to export as (1)MP4 or (2)GIF" << std::endl;
 
-    std::cout << "\nDo you want to export as (1)MP4 or (2)GIF" << std::endl;
+        char answer;
+        std::cin >> answer;
 
-    char answer;
-    std::cin >> answer;
-
-    if (answer == '1') {
-        recorder.exportMP4();
-    } else if (answer == '2') {
-        recorder.exportGIF();
+        if (answer == '1') {
+            recorder.exportMP4();
+        } else {
+            recorder.exportGIF();
+        }
     }
 
     return 0;
