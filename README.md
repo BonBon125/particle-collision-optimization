@@ -229,14 +229,15 @@ This allows tuning between rendering quality and performance.
 
 # Simulation Characteristics
 
-  Property              Value
-  --------------------- ---------------------------
-  Particle count        30,000
-  Rendering             OpenGL
-  Collision detection   Grid spatial partitioning
-  Frame capture         OpenGL framebuffer
-  Output formats        PNG, MP4, GIF
-  Recording             Multithreaded
+| Property | Value |
+|----------|-------|
+| Particle count | 30,000 |
+| Rendering | OpenGL |
+| Collision detection | Grid spatial partitioning |
+| Frame capture | OpenGL framebuffer |
+| Output formats | PNG, MP4, GIF |
+| Recording | Multithreaded |
+
 
 ------------------------------------------------------------------------
 
