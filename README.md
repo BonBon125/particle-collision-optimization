@@ -1,4 +1,4 @@
-# High-Performance 2D Particle Collision Simulation (OpenGL + C++)
+# 2D Particle Collision Simulation (OpenGL + C++)
 
 <p align="center">
   <img src="gif-directory/simulation.gif" width="600">

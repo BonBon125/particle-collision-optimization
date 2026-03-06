@@ -23,10 +23,10 @@ const float RECORDING_DURATION = 2.0f;
 const int WIDTH_HEIGHT = 1000;
 
 const int NUM_CIRCLE_SEGMENTS = 10;
-const int NUM_PARTICLES = 30000;
+const int NUM_PARTICLES = 10000;
 
-const float MIN_BALL_RADIUS = 0.0025f;
-const float MAX_BALL_RADIUS = 0.005f;
+const float MIN_BALL_RADIUS = 0.005f;
+const float MAX_BALL_RADIUS = 0.01f;
 const float RESTITUTION = 0.9f;
 const float BORDER_THICKNESS = 0.001f;
 const float BALL_RADIUS = 0.01f;
