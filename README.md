@@ -1,12 +1,9 @@
 # High-Performance 2D Particle Collision Simulation (OpenGL + C++)
 
-```{=html}
 <p align="center">
-```
-`<img src="gif-directory/simulation.gif" width="600">`{=html}
-```{=html}
+  <img src="gif-directory/simulation.gif" width="600">
 </p>
-```
+
 A high-performance **2D particle collision simulation** written in
 modern C++ using **OpenGL** and **GLFW**.\
 The project simulates thousands of particles with real-time rendering
