@@ -18,7 +18,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-const float RECORDING_DURATION = 4.0f;
+const float RECORDING_DURATION = 2.0f;
 
 const int WIDTH_HEIGHT = 1000;
 
@@ -500,18 +500,22 @@ struct ThreadedPNGRecorder {
 
         std::ostringstream cmd;
 
-        // High-quality GIF via palette generation (much better colours)
-        cmd << "ffmpeg -y -framerate " << fps << " -i images/frame_%05d.png "
-                                                 " -vf \"fps="
-            << fps << ",scale=800:-1:flags=lanczos,palettegen\" palette.png";
+        cmd << "ffmpeg -y -framerate " << fps
+            << " -i images/frame_%05d.png "
+               " -vf \"fps="
+            << fps
+            << ",scale=480:-1:flags=lanczos,palettegen=max_colors=64:stats_mode=diff\" palette.png";
 
         std::cout << "Generating GIF palette...\n";
         std::system(cmd.str().c_str());
 
         std::ostringstream cmd2;
-        cmd2 << "ffmpeg -y -framerate " << fps << " -i images/frame_%05d.png -i palette.png "
-                                                  " -lavfi \"fps="
-             << fps << ",scale=800:-1:flags=lanczos[x];[x][1:v]paletteuse\" "
+
+        cmd2 << "ffmpeg -y -framerate " << fps
+             << " -i images/frame_%05d.png -i palette.png "
+                " -lavfi \"fps="
+             << fps
+             << ",scale=480:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=5\" "
              << outputFile;
 
         std::cout << "Exporting GIF...\n";
@@ -525,6 +529,17 @@ int main()
 {
     if (!glfwInit())
         return -1;
+
+    ThreadedPNGRecorder recorder;
+    // We want to check if we want to record
+    std::cout << "\nDo you want to (y)Record" << std::endl;
+
+    char record_option;
+    std::cin >> record_option;
+
+    if (record_option == 'y') {
+        recorder.start(60);
+    }
 
     GLFWwindow* window = glfwCreateWindow(WIDTH_HEIGHT, WIDTH_HEIGHT, "Bouncing Ball", nullptr, nullptr);
     if (!window) {
@@ -545,10 +560,9 @@ int main()
 
     ParticleSystem_V2 particleSystem = ParticleSystem_V2();
 
-    ThreadedPNGRecorder recorder;
-    recorder.start(60);
-
+    float beginning_time = (float)glfwGetTime();
     float lastTime = (float)glfwGetTime();
+
     while (!glfwWindowShouldClose(window)) {
         float currentTime = (float)glfwGetTime();
         float deltaTime = currentTime - lastTime;
@@ -567,12 +581,25 @@ int main()
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-        if (currentTime > RECORDING_DURATION) {
+        if (recorder.recording && currentTime - beginning_time > RECORDING_DURATION) {
             glfwSetWindowShouldClose(window, true);
         }
     }
-    recorder.exportMP4();
 
     glfwTerminate();
+
+    // Check if we want to export as MP4 or a gif
+
+    std::cout << "\nDo you want to export as (1)MP4 or (2)GIF" << std::endl;
+
+    char answer;
+    std::cin >> answer;
+
+    if (answer == '1') {
+        recorder.exportMP4();
+    } else if (answer == '2') {
+        recorder.exportGIF();
+    }
+
     return 0;
 }

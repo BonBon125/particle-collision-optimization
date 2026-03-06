@@ -7,9 +7,7 @@ A real-time 2D particle physics simulation written in **C++** using **OpenGL** a
 ## Demo
 
 <p align="center">
-  <video src="gif-directory/simulation.mp4" controls autoplay loop muted width="600">
-    Your browser does not support the video tag.
-  </video>
+  <img src="gif-directory/simulation.gif" width="600">
 </p>
 
 ---
