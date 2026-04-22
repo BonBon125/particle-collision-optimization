@@ -3,3 +3,4 @@ bouncing_balls
 gif-directory/*.png
 gif-directory/*.gif
 images/
+build/
