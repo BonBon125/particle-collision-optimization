@@ -16,9 +16,7 @@ simulation techniques**, including **spatial partitioning**,
 resolution**.
 
 The simulation renders up to **30,000 particles** and demonstrates two
-different collision detection strategies:
-
--   A naive **O(n²)** implementation
+different collision detection strategies: -   A naive **O(n²)** implementation
 -   A **grid-based spatial partitioning** system that significantly
     improves performance
 
@@ -224,6 +222,16 @@ The number of segments is configurable via:
     NUM_CIRCLE_SEGMENTS
 
 This allows tuning between rendering quality and performance.
+
+------------------------------------------------------------------------
+
+# How to run
+
+    mkdir build
+    cd build
+    cmake ../
+    cmake --build .
+    ./MyOpenGLApp
 
 ------------------------------------------------------------------------
 
