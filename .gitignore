@@ -4,3 +4,4 @@ gif-directory/*.png
 gif-directory/*.gif
 images/
 build/
+compile_commands.json
