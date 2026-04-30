@@ -123,14 +123,14 @@ void ThreadedPNGRecorder::exportGIF(const std::string& outputFile)
     std::ostringstream cmd1;
     cmd1 << "ffmpeg -y -framerate " << fps
          << " -i ../images/frame_%05d.png "
-         << "-vf \"fps=" << fps << ",scale=480:-1:flags=lanczos,palettegen\" palette.png";
+         << "-vf \"fps=" << fps << ",scale=480:-1:flags=lanczos,palettegen\" gif-directory/palette.png";
 
     std::system(cmd1.str().c_str());
 
     // Step 2: Use palette to generate the GIF
     std::ostringstream cmd2;
     cmd2 << "ffmpeg -y -framerate " << fps
-         << " -i ../images/frame_%05d.png -i palette.png "
+         << " -i ../images/frame_%05d.png -i gif-directory/palette.png "
          << "-lavfi \"fps=" << fps << ",scale=480:-1:flags=lanczos[x];[x][1:v]paletteuse\" "
          << outputFile;
 
