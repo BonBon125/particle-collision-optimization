@@ -5,3 +5,4 @@ gif-directory/*.gif
 images/
 build/
 compile_commands.json
+.cache/
