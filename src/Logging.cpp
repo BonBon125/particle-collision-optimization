@@ -35,10 +35,11 @@ void Logging::logFrameData(float time, ParticleSystem& particleSystem)
     // ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Collision Handling Method: %s", particleSystem.getMethodName().c_str());
     // ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Simulation Data:");
 
-    ImGui::Text("Collision Handling Method: %s", particleSystem.getMethodName().c_str());
-    ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
-    ImGui::Text("Time: %.2f s", time);
-    ImGui::Text("Particle Count: %i", NUM_PARTICLES);
+    ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Collision Handling Method:     %s", particleSystem.getMethodName().c_str());
+    ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Particle Count:                %i", NUM_PARTICLES);
+    ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "FPS:                           %.1f", ImGui::GetIO().Framerate);
+    ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Time:                          %.2f s", time);
+    ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Particle Collision Count:      %i", particleSystem.getNumCollidingParticles());
 
     ImGui::End();
     ImGui::PopStyleColor();

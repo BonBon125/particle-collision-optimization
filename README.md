@@ -1,8 +1,18 @@
 # 2D Particle Collision Simulation (OpenGL + C++)
 
+## Brute Force
 <p align="center">
-  <img src="readme-assets/frame.png" >
+  <img src="readme-assets/brute-force.png" >
 </p>
+
+------------------------------------------------------------------------
+
+## Spatial Partitioning
+<p align="center">
+  <img src="readme-assets/spatial-partitioning.png" >
+</p>
+
+------------------------------------------------------------------------
 
 A high-performance **2D particle collision simulation** written in
 modern C++ using **OpenGL** and **GLFW**.\

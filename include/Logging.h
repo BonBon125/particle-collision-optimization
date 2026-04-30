@@ -1,3 +1,4 @@
+#pragma once
 #include "ParticleSystem.h"
 #include <GLFW/glfw3.h>
 class Logging {
