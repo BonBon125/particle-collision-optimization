@@ -81,9 +81,3 @@ void clearScreen()
     glClearColor(c.r, c.g, c.b, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 }
-
-void displayFPS(float dt)
-{
-    if (dt > 0)
-        std::cout << "\r" << (1.0f / dt) << std::flush;
-}
