@@ -1,7 +1,7 @@
 # 2D Particle Collision Simulation (OpenGL + C++)
 
 <p align="center">
-  <img src="selected-gif-directory/simulation.gif" width="600">
+  <img src="readme-assets/frame.png" width="600">
 </p>
 
 A high-performance **2D particle collision simulation** written in
