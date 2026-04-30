@@ -19,4 +19,3 @@ public:
 
 void drawCircle(float cx, float cy, float r);
 void clearScreen();
-void displayFPS(float dt);

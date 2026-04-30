@@ -3,8 +3,8 @@
 #include "Utils.h"
 #include <algorithm>
 #include <cmath>
-
-ParticleSystem::ParticleSystem()
+ParticleSystem::ParticleSystem(std::string methodName)
+    : mCollisionHandlingMethod(methodName)
 {
     for (int i = 0; i < NUM_PARTICLES; i++) {
         mParticles[i] = new Particle();
@@ -41,7 +41,6 @@ bool ParticleSystem::areTouching(Particle* a, Particle* b)
     float r = a->radius + b->radius;
     return hypot <= r;
 }
-
 void ParticleSystem::resetParticleCollisions()
 {
     for (Particle* particle : mParticles) {
@@ -118,6 +117,11 @@ void ParticleSystem::moveParticle(Particle* particle, float timeDelta)
 {
     particle->x += particle->vx * timeDelta;
     particle->y += particle->vy * timeDelta;
+}
+
+ParticleSystem_V1::ParticleSystem_V1()
+    : ParticleSystem("Brute Force")
+{
 }
 
 void ParticleSystem_V1::handleParticleCollisions()
@@ -209,6 +213,7 @@ void ParticleSystem_V2::handleParticleCollisions()
 }
 
 ParticleSystem_V2::ParticleSystem_V2()
+    : ParticleSystem("Spatial Partitioning")
 {
     grid.resize(GRID_WIDTH * GRID_HEIGHT);
 }
