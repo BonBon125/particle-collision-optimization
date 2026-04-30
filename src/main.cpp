@@ -62,10 +62,11 @@ int main()
 
         // 2. Define your Text Overlay
         // We use a window with specific flags to make it look like an overlay
-        ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Once);
+        ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiCond_Once);
         ImGui::Begin("Stats", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoInputs);
+        ImGui::SetWindowFontScale(1.5f); // Make text 50% larger in this window only
 
-        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Collision Handling Method: %s", particleSystem.getMethodName().c_str());
+        ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Collision Handling Method: %s", particleSystem.getMethodName().c_str());
         ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Simulation Data:");
         ImGui::Text("FPS: %.1f", io.Framerate);
         ImGui::Text("Time: %.2f s", currentTime - beginning_time);
