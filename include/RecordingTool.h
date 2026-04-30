@@ -1,3 +1,4 @@
+#pragma once
 #include "Recorder.h"
 class RecordingTool {
 private:

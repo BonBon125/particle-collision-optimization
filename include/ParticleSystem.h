@@ -10,12 +10,14 @@ public:
     ParticleSystem(std::string methodName);
     virtual ~ParticleSystem();
     void render();
+    int getNumCollidingParticles();
     virtual void update(float timeDelta) = 0;
     std::string getMethodName() const { return mCollisionHandlingMethod; }
 
 protected:
     std::string mCollisionHandlingMethod;
     std::array<Particle*, NUM_PARTICLES> mParticles;
+    int numCollidingParticles = 0;
     void resetParticleCollisions();
     void resolveParticleCollision(Particle* p1, Particle* p2);
     void handleWallCollisions(Particle* p);

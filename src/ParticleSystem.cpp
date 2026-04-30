@@ -33,6 +33,11 @@ void ParticleSystem::render()
     }
 }
 
+int ParticleSystem::getNumCollidingParticles()
+{
+    return numCollidingParticles;
+}
+
 bool ParticleSystem::areTouching(Particle* a, Particle* b)
 {
     float dx = a->x - b->x;
@@ -43,7 +48,10 @@ bool ParticleSystem::areTouching(Particle* a, Particle* b)
 }
 void ParticleSystem::resetParticleCollisions()
 {
+    numCollidingParticles = 0;
     for (Particle* particle : mParticles) {
+        if (particle->is_colliding)
+            numCollidingParticles++;
         particle->is_colliding = false;
     }
 }
