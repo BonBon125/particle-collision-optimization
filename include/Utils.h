@@ -19,3 +19,4 @@ public:
 
 void drawCircle(float cx, float cy, float r);
 void clearScreen();
+void print(std::string string);

@@ -1,5 +1,6 @@
 #include "Recorder.h"
 #include "Constants.h"
+#include "Utils.h"
 #include <GL/gl.h>
 #include <cstring>
 #include <iomanip>
@@ -24,6 +25,12 @@ ThreadedPNGRecorder::~ThreadedPNGRecorder()
     }
 }
 
+void ThreadedPNGRecorder::clearPreviousImages()
+{
+    print("Clearing Previous Images");
+    std::system("rm ../images/*.png");
+}
+
 void ThreadedPNGRecorder::start(int fps_)
 {
     fps = fps_;
@@ -31,8 +38,9 @@ void ThreadedPNGRecorder::start(int fps_)
     recording = true;
     done = false;
 
+    clearPreviousImages();
     writerThread = std::thread(&ThreadedPNGRecorder::threadedWriter, this);
-    std::cout << "\n[Recorder] Threaded recording started." << std::endl;
+    print("[Recorder] Threaded recording started.");
 }
 
 void ThreadedPNGRecorder::captureFrame()
@@ -73,7 +81,9 @@ void ThreadedPNGRecorder::stop()
     if (writerThread.joinable()) {
         writerThread.join();
     }
-    std::cout << "[Recorder] Stopped. Total frames processed: " << frameCounter << std::endl;
+    std::ostringstream message;
+    message << "[Recorder] Stopped. Total frames processed: " << frameCounter;
+    print(message.str());
 }
 
 void ThreadedPNGRecorder::threadedWriter()
@@ -107,11 +117,14 @@ void ThreadedPNGRecorder::exportMP4(const std::string& outputFile)
     std::ostringstream cmd;
     cmd << "ffmpeg -y -framerate " << fps
         << " -i ../images/frame_%05d.png -pix_fmt yuv420p "
-        << outputFile;
+        << outputFile
+        << " > /dev/null 2>&1";
 
-    std::cout << "[Recorder] Exporting MP4 via FFmpeg..." << std::endl;
+    print("[Recorder] Exporting MP4 via FFmpeg...");
     if (std::system(cmd.str().c_str()) == 0) {
-        std::cout << "[Recorder] Export complete: " << outputFile << std::endl;
+        std::ostringstream message;
+        message << "[Recorder] Exported to: " << outputFile;
+        print(message.str());
     }
 }
 
@@ -123,17 +136,22 @@ void ThreadedPNGRecorder::exportGIF(const std::string& outputFile)
     std::ostringstream cmd1;
     cmd1 << "ffmpeg -y -framerate " << fps
          << " -i ../images/frame_%05d.png "
-         << "-vf \"fps=" << fps << ",scale=480:-1:flags=lanczos,palettegen\" gif-directory/palette.png";
+         << "-vf \"fps=" << fps << ",scale=480:-1:flags=lanczos,palettegen\" ../gif-directory/palette.png > /dev/null 2>&1";
 
     std::system(cmd1.str().c_str());
 
     // Step 2: Use palette to generate the GIF
     std::ostringstream cmd2;
     cmd2 << "ffmpeg -y -framerate " << fps
-         << " -i ../images/frame_%05d.png -i gif-directory/palette.png "
+         << " -i ../images/frame_%05d.png -i ../gif-directory/palette.png "
          << "-lavfi \"fps=" << fps << ",scale=480:-1:flags=lanczos[x];[x][1:v]paletteuse\" "
-         << outputFile;
+         << outputFile
+         << " > /dev/null 2>&1";
 
-    std::cout << "[Recorder] Exporting GIF..." << std::endl;
-    std::system(cmd2.str().c_str());
+    print("[Recorder] Exporting GIF...");
+    if (std::system(cmd2.str().c_str()) == 0) {
+        std::ostringstream message;
+        message << "[Recorder] Exported to: " << outputFile;
+        print(message.str());
+    }
 }

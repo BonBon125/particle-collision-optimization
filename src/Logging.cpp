@@ -27,13 +27,10 @@ void Logging::logFrameData(float time, ParticleSystem& particleSystem)
 
     // 2. Define your Text Overlay
     // We use a window with specific flags to make it look like an overlay
-    ImGui::SetNextWindowPos(ImVec2(20, 20), ImGuiCond_Once);
+    ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Once);
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.4f));
     ImGui::Begin("Stats", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoInputs);
     ImGui::SetWindowFontScale(1.5f); // Make text 50% larger in this window only
-
-    // ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Collision Handling Method: %s", particleSystem.getMethodName().c_str());
-    // ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Simulation Data:");
 
     ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Collision Handling Method:     %s", particleSystem.getMethodName().c_str());
     ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Particle Count:                %i", NUM_PARTICLES);
