@@ -23,6 +23,7 @@ public:
 
 private:
     void threadedWriter();
+    void clearPreviousImages();
 
     int width;
     int height;

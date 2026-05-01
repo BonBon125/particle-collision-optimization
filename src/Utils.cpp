@@ -81,3 +81,13 @@ void clearScreen()
     glClearColor(c.r, c.g, c.b, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 }
+void print(std::string string)
+{
+    size_t size = string.size();
+
+    std::string border = std::string(size + 4, '-');
+
+    std::cout << " +" << border << "+" << std::endl;
+    std::cout << " |  " << string << "  |" << std::endl;
+    std::cout << " +" << border << "+" << std::endl;
+}
