@@ -1,10 +1,12 @@
 #include <GLFW/glfw3.h>
 #include <memory>
 
+#include "Constants.h"
 #include "Logging.h"
 #include "ParticleSystem.h"
 #include "ParticleSystemApp.h"
 #include "RecordingTool.h"
+#include "imgui.h"
 
 bool ParticleSystemApp::init()
 {
@@ -30,9 +32,9 @@ bool ParticleSystemApp::init()
 void ParticleSystemApp::run()
 {
     while (!glfwWindowShouldClose(window)) {
-        // Update the time
         updateTime();
         handleEvents();
+        update();
         render();
     }
 }
@@ -69,6 +71,14 @@ void ParticleSystemApp::handleEvents()
 {
     glfwSwapBuffers(window);
     glfwPollEvents();
+}
+
+void ParticleSystemApp::update()
+{
+    int numParticles = mParticleSystem->getNumParticles();
+    ImGui::SliderInt("Set Num Particles", &numParticles, 0, NUM_PARTICLES);
+    mParticleSystem->updateNumParticles(numParticles);
+    return;
 }
 
 void ParticleSystemApp::render()

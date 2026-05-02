@@ -1,7 +1,5 @@
 #pragma once
-#include "Constants.h"
 #include "Particle.h"
-#include <array>
 #include <string>
 #include <vector>
 
@@ -11,12 +9,14 @@ public:
     virtual ~ParticleSystem();
     void render();
     int getNumCollidingParticles();
+    int getNumParticles();
+    void updateNumParticles(int newNumParticles);
     virtual void update(float timeDelta) = 0;
     std::string getMethodName() const { return mCollisionHandlingMethod; }
 
 protected:
     std::string mCollisionHandlingMethod;
-    std::array<Particle*, NUM_PARTICLES> mParticles;
+    std::vector<Particle*> mParticles;
     int numCollidingParticles = 0;
     void resetParticleCollisions();
     void resolveParticleCollision(Particle* p1, Particle* p2);

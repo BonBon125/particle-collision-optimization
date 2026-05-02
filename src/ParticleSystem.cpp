@@ -6,13 +6,14 @@
 ParticleSystem::ParticleSystem(std::string methodName)
     : mCollisionHandlingMethod(methodName)
 {
+    mParticles.resize(NUM_PARTICLES);
     for (int i = 0; i < NUM_PARTICLES; i++) {
-        mParticles[i] = new Particle();
-        mParticles[i]->x = RandomGen::get(WORLD_MIN, WORLD_MAX);
-        mParticles[i]->y = RandomGen::get(WORLD_MIN, WORLD_MAX);
-        mParticles[i]->vx = RandomGen::get(-MAX_BALL_SPEED, MAX_BALL_SPEED);
-        mParticles[i]->vy = RandomGen::get(-MAX_BALL_SPEED, MAX_BALL_SPEED);
-        mParticles[i]->radius = RandomGen::get(MIN_BALL_RADIUS, MAX_BALL_RADIUS);
+        mParticles.at(i) = new Particle();
+        mParticles.at(i)->x = RandomGen::get(WORLD_MIN, WORLD_MAX);
+        mParticles.at(i)->y = RandomGen::get(WORLD_MIN, WORLD_MAX);
+        mParticles.at(i)->vx = RandomGen::get(-MAX_BALL_SPEED, MAX_BALL_SPEED);
+        mParticles.at(i)->vy = RandomGen::get(-MAX_BALL_SPEED, MAX_BALL_SPEED);
+        mParticles.at(i)->radius = RandomGen::get(MIN_BALL_RADIUS, MAX_BALL_RADIUS);
     }
 }
 
@@ -38,6 +39,30 @@ int ParticleSystem::getNumCollidingParticles()
     return numCollidingParticles;
 }
 
+int ParticleSystem::getNumParticles()
+{
+    return mParticles.size();
+}
+void ParticleSystem::updateNumParticles(int newNumParticles)
+{
+    if (newNumParticles == mParticles.size()) {
+        return;
+    } else if (newNumParticles < mParticles.size()) {
+        mParticles.resize(newNumParticles);
+        return;
+    } else {
+        int oldSize = mParticles.size();
+        mParticles.resize(newNumParticles);
+        for (int i = oldSize; i < mParticles.size(); i++) {
+            mParticles.at(i) = new Particle();
+            mParticles.at(i)->x = RandomGen::get(WORLD_MIN, WORLD_MAX);
+            mParticles.at(i)->y = RandomGen::get(WORLD_MIN, WORLD_MAX);
+            mParticles.at(i)->vx = RandomGen::get(-MAX_BALL_SPEED, MAX_BALL_SPEED);
+            mParticles.at(i)->vy = RandomGen::get(-MAX_BALL_SPEED, MAX_BALL_SPEED);
+            mParticles.at(i)->radius = RandomGen::get(MIN_BALL_RADIUS, MAX_BALL_RADIUS);
+        }
+    }
+}
 bool ParticleSystem::areTouching(Particle* a, Particle* b)
 {
     float dx = a->x - b->x;
@@ -175,8 +200,8 @@ void ParticleSystem_V2::rebuildGrid()
     }
 
     // Add each ball to the corresponding gridbox
-    for (int i = 0; i < NUM_PARTICLES; i++) {
-        Particle* p = mParticles[i];
+    for (int i = 0; i < mParticles.size(); i++) {
+        Particle* p = mParticles.at(i);
 
         // Convert the x and y values to the grid x and y values
         int cx = std::clamp(cellX(p->x), 0, GRID_WIDTH - 1);
@@ -188,9 +213,9 @@ void ParticleSystem_V2::handleParticleCollisions()
 {
     resetParticleCollisions();
 
-    for (int i = 0; i < NUM_PARTICLES; i++) {
+    for (int i = 0; i < mParticles.size(); i++) {
         // For every ball
-        Particle* p = mParticles[i];
+        Particle* p = mParticles.at(i);
 
         int cx = std::clamp(cellX(p->x), 0, GRID_WIDTH - 1);
         int cy = std::clamp(cellY(p->y), 0, GRID_HEIGHT - 1);
@@ -211,8 +236,8 @@ void ParticleSystem_V2::handleParticleCollisions()
                         continue;
                     }
                     // If they are touching,
-                    if (areTouching(p, mParticles[j])) {
-                        resolveParticleCollision(p, mParticles[j]);
+                    if (areTouching(p, mParticles.at(j))) {
+                        resolveParticleCollision(p, mParticles.at(j));
                     }
                 }
             }

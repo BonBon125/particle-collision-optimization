@@ -3,7 +3,7 @@
 inline const float RECORDING_DURATION = 2.0f;
 inline const int WIDTH_HEIGHT = 1000;
 inline const int NUM_CIRCLE_SEGMENTS = 10;
-inline const int NUM_PARTICLES = 10000;
+inline const int NUM_PARTICLES = 30000;
 inline const float MIN_BALL_RADIUS = 0.001f;
 inline const float MAX_BALL_RADIUS = 0.0025f;
 inline const float RESTITUTION = 0.9f;
