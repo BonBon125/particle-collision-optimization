@@ -9,7 +9,7 @@ private:
 
 public:
     RecordingTool();
-    void handleFrame(float dt);
+    void handleFrame();
     bool isRecording();
     char getInput(std::string prompt);
     ~RecordingTool();
