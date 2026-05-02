@@ -36,6 +36,7 @@ add_executable(${PROJECT_NAME}
     src/Recorder.cpp
     src/RecordingTool.cpp
     src/Logging.cpp
+    src/ParticleSystemApp.cpp
     ${IMGUI_SOURCES}
 )
 

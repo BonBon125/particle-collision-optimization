@@ -1,6 +1,5 @@
 #include "RecordingTool.h"
 #include "Utils.h"
-#include <cstddef>
 #include <iostream>
 
 RecordingTool::RecordingTool()
@@ -14,7 +13,7 @@ RecordingTool::RecordingTool()
     }
 }
 
-void RecordingTool::handleFrame(float dt)
+void RecordingTool::handleFrame()
 {
     if (recorder.recording) {
         recorder.captureFrame();
