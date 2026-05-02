@@ -33,7 +33,7 @@ void Logging::logFrameData(float time, ParticleSystem& particleSystem)
     ImGui::SetWindowFontScale(1.5f); // Make text 50% larger in this window only
 
     ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Collision Handling Method:     %s", particleSystem.getMethodName().c_str());
-    ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Particle Count:                %i", NUM_PARTICLES);
+    ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Particle Count:                %i", particleSystem.getNumParticles());
     ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "FPS:                           %.1f", ImGui::GetIO().Framerate);
     ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Time:                          %.2f s", time);
     ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Particle Collision Count:      %i", particleSystem.getNumCollidingParticles());

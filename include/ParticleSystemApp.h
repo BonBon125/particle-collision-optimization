@@ -25,4 +25,5 @@ private:
     void updateTime();
     void handleEvents();
     void render();
+    void update();
 };
