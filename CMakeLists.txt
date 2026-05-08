@@ -26,17 +26,22 @@ set(IMGUI_SOURCES
     ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
 )
 
+set(LOCAL_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
+set(LOCAL_SOURCES 
+    ${LOCAL_SOURCE_DIR}/main.cpp
+    ${LOCAL_SOURCE_DIR}/Utils.cpp
+    ${LOCAL_SOURCE_DIR}/ParticleSystem.cpp
+    ${LOCAL_SOURCE_DIR}/Recorder.cpp
+    ${LOCAL_SOURCE_DIR}/RecordingTool.cpp
+    ${LOCAL_SOURCE_DIR}/Logging.cpp
+    ${LOCAL_SOURCE_DIR}/ParticleSystemApp.cpp
+)
+
 
 # 3. Define the Executable
 # We point to main.cpp inside the src directory
 add_executable(${PROJECT_NAME} 
-    src/main.cpp
-    src/Utils.cpp
-    src/ParticleSystem.cpp
-    src/Recorder.cpp
-    src/RecordingTool.cpp
-    src/Logging.cpp
-    src/ParticleSystemApp.cpp
+    ${LOCAL_SOURCES}
     ${IMGUI_SOURCES}
 )
 
