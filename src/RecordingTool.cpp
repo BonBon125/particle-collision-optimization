@@ -1,15 +1,19 @@
 #include "RecordingTool.h"
 #include "Utils.h"
 #include <iostream>
+#include <string>
 
-RecordingTool::RecordingTool()
+void RecordingTool::setOptions(std::string recordingMethod, int recordingDuration)
 {
-    std::string message = "Do you want to (y)Record: ";
+    mRecordingMethod = recordingMethod;
+    mRecordingDuration = recordingDuration;
+    mRecordingOption = recordingMethod != "" ? 'y' : 'n';
+}
 
-    record_option = getInput(message);
-
-    if (record_option == 'y') {
-        recorder.start(60);
+void RecordingTool::init()
+{
+    if (mRecordingOption == 'y') {
+        recorder.start();
     }
 }
 
@@ -41,15 +45,17 @@ char RecordingTool::getInput(std::string prompt)
     return input;
 }
 
+int RecordingTool::getRecordingDuration()
+{
+    return mRecordingDuration;
+}
+
 RecordingTool::~RecordingTool()
 {
-    if (record_option == 'y') {
-        std::string message = "Do you want to export as (1)MP4 or (2)GIF: ";
-        char answer = getInput(message);
-
-        if (answer == '1') {
+    if (mRecordingOption == 'y') {
+        if (mRecordingMethod == "MP4") {
             recorder.exportMP4();
-        } else {
+        } else if (mRecordingMethod == "GIF") {
             recorder.exportGIF();
         }
     }

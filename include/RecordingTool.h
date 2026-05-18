@@ -5,12 +5,16 @@
 class RecordingTool {
 private:
     ThreadedPNGRecorder recorder;
-    char record_option;
+    std::string mRecordingMethod = "";
+    int mRecordingDuration;
+    char mRecordingOption;
 
 public:
-    RecordingTool();
+    void init();
+    void setOptions(std::string recordingMethod = "", int recordingDuration = 60);
     void handleFrame();
     bool isRecording();
     char getInput(std::string prompt);
+    int getRecordingDuration();
     ~RecordingTool();
 };
