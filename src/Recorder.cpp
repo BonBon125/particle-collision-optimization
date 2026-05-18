@@ -27,7 +27,7 @@ ThreadedPNGRecorder::~ThreadedPNGRecorder()
 
 void ThreadedPNGRecorder::clearPreviousImages()
 {
-    print("Clearing Previous Images");
+    print("[Recorder] Clearing Previous Images");
     std::system("rm ../images/*.png");
 }
 

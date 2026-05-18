@@ -3,8 +3,9 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
-Logging::Logging(GLFWwindow* window)
+Logging::Logging(GLFWwindow* window, bool enableLogging)
 {
+    mEnableLogging = enableLogging;
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -24,6 +25,10 @@ void Logging::logFrameData(float time, ParticleSystem& particleSystem)
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+
+    if (!mEnableLogging) {
+        return;
+    }
 
     // 2. Define your Text Overlay
     // We use a window with specific flags to make it look like an overlay

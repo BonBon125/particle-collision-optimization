@@ -35,6 +35,7 @@ set(LOCAL_SOURCES
     ${LOCAL_SOURCE_DIR}/RecordingTool.cpp
     ${LOCAL_SOURCE_DIR}/Logging.cpp
     ${LOCAL_SOURCE_DIR}/ParticleSystemApp.cpp
+    ${LOCAL_SOURCE_DIR}/CommandLineArguments.cpp
 )
 
 
